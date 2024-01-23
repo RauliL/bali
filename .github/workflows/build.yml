@@ -1,0 +1,16 @@
+name: build
+
+on: [push]
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: configure
+        run: mkdir build && cd build && cmake -DCMAKE_CXX_FLAGS="-Wall -Werror" ..
+      - name: build
+        run: cmake --build build
