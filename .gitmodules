@@ -1,3 +1,0 @@
-[submodule "ext/peelo-prompt"]
-	path = ext/peelo-prompt
-	url = https://github.com/peelonet/peelo-prompt.git
