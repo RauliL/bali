@@ -314,6 +314,24 @@ namespace lisp
   }
 
   static std::shared_ptr<value>
+  function_append(
+    value::list::iterator& it,
+    const value::list::iterator& end
+  )
+  {
+    value::list::container_type result;
+
+    while (it != end)
+    {
+      const auto list = to_list(*it++);
+
+      result.insert(std::end(result), std::begin(list), std::end(list));
+    }
+
+    return make_list(result);
+  }
+
+  static std::shared_ptr<value>
   function_not(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -472,6 +490,7 @@ namespace lisp
     { "car", function_car },
     { "cdr", function_cdr },
     { "list", function_list },
+    { "append", function_append },
 
     // Conditions.
     { "not", function_not },
