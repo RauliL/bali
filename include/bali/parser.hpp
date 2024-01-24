@@ -23,7 +23,6 @@ namespace bali
     bool eof() const;
     char read();
     bool peek_read(char input);
-    bool peek_read(bool (*callback)(char));
 
   private:
     std::string::const_iterator m_pos;

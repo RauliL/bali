@@ -5,12 +5,6 @@
 
 namespace bali
 {
-  static inline bool
-  isspace(char c)
-  {
-    return std::isspace(c);
-  }
-
   parser::parser(const std::string& input, int line)
     : m_pos(std::begin(input))
     , m_end(std::end(input))
@@ -57,8 +51,10 @@ namespace bali
           }
         }
       }
-      else if (!peek_read(isspace))
+      else if (std::isspace(*m_pos))
       {
+        read();
+      } else {
         return;
       }
     }
@@ -281,19 +277,6 @@ namespace bali
   parser::peek_read(char input)
   {
     if (!eof() && *m_pos == input)
-    {
-      read();
-
-      return true;
-    }
-
-    return false;
-  }
-
-  bool
-  parser::peek_read(bool (*callback)(char))
-  {
-    if (!eof() && callback(*m_pos))
     {
       read();
 
