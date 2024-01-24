@@ -132,9 +132,17 @@ namespace bali
 
       return make_atom(buffer, line, column);
     } else {
-      std::string id;
+      std::string buffer;
 
-      id += read();
+      do
+      {
+        if (peek_read('\\'))
+        {
+          parse_escape_sequence(buffer);
+        } else {
+          buffer += read();
+        }
+      }
       while (
         !eof() &&
         !std::isspace(*m_pos) &&
@@ -142,17 +150,9 @@ namespace bali
         *m_pos != '(' &&
         *m_pos != ')' &&
         *m_pos != '\''
-      )
-      {
-        if (peek_read('\\'))
-        {
-          parse_escape_sequence(id);
-        } else {
-          id += read();
-        }
-      }
+      );
 
-      return make_atom(id, line, column);
+      return make_atom(buffer, line, column);
     }
   }
 
