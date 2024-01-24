@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bali/utils.hpp>
 #include <bali/value.hpp>
 
 namespace bali
@@ -18,9 +19,9 @@ namespace bali
   private:
     void skip_whitespace();
     value::ptr parse_value();
+    void parse_escape_sequence(std::string& buffer);
     bool eof() const;
     char read();
-    bool peek(char input) const;
     bool peek_read(char input);
     bool peek_read(bool (*callback)(char));
 

@@ -111,6 +111,30 @@ namespace bali
         line,
         column
       );
+    }
+    else if (peek_read('"'))
+    {
+      std::string buffer;
+
+      for (;;)
+      {
+        if (eof())
+        {
+          throw error("Unterminated string: Missing `\"'.", line, column);
+        }
+        else if (peek_read('"'))
+        {
+          break;
+        }
+        else if (peek_read('\\'))
+        {
+          parse_escape_sequence(buffer);
+        } else {
+          buffer += read();
+        }
+      }
+
+      return make_atom(buffer, line, column);
     } else {
       std::string id;
 
@@ -124,10 +148,116 @@ namespace bali
         *m_pos != '\''
       )
       {
-        id += read();
+        if (peek_read('\\'))
+        {
+          parse_escape_sequence(id);
+        } else {
+          id += read();
+        }
       }
 
       return make_atom(id, line, column);
+    }
+  }
+
+  void
+  parser::parse_escape_sequence(std::string& buffer)
+  {
+    const int line = m_line;
+    const int column = m_column;
+
+    if (eof())
+    {
+      throw error(
+        "Unexpected end of input; Missing escape sequence.",
+        line,
+        column
+      );
+    }
+
+    switch (read())
+    {
+    case 'b':
+      buffer.append(1, 010);
+      break;
+
+    case 't':
+      buffer.append(1, 011);
+      break;
+
+    case 'n':
+      buffer.append(1, 012);
+      break;
+
+    case 'f':
+      buffer.append(1, 014);
+      break;
+
+    case 'r':
+      buffer.append(1, 015);
+      break;
+
+    case '"':
+    case '\'':
+    case '\\':
+    case '/':
+      buffer.append(1, *(m_pos - 1));
+      break;
+
+    case 'u':
+      {
+        char32_t result = 0;
+
+        for (int i = 0; i < 4; ++i)
+        {
+          if (eof())
+          {
+            throw error(
+              "Unterminated escape sequence.",
+              line,
+              column
+            );
+          }
+          else if (!std::isxdigit(*m_pos))
+          {
+            throw error(
+              "Illegal Unicode hex escape sequence.",
+              line,
+              column
+            );
+          }
+
+          if (*m_pos >= 'A' && *m_pos <= 'F')
+          {
+            result = result * 16 + (read() - 'A' + 10);
+          }
+          else if (*m_pos >= 'a' && *m_pos <= 'f')
+          {
+            result = result * 16 + (read() - 'a' + 10);
+          } else {
+            result = result * 16 + (read() - '0');
+          }
+        }
+
+        if (!utils::is_valid_unicode_codepoint(result))
+        {
+          throw error(
+            "Illegal Unicode hex escape sequence.",
+            line,
+            column
+          );
+        }
+
+        utils::utf8_encode_codepoint(result, buffer);
+      }
+      break;
+
+    default:
+      throw error(
+        "Illegal escape sequence.",
+        line,
+        column
+      );
     }
   }
 
@@ -148,15 +278,9 @@ namespace bali
   }
 
   bool
-  parser::peek(char input) const
-  {
-    return !eof() && *m_pos == input;
-  }
-
-  bool
   parser::peek_read(char input)
   {
-    if (peek(input))
+    if (!eof() && *m_pos == input)
     {
       read();
 

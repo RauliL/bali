@@ -45,4 +45,38 @@ namespace bali::utils
 
     return true;
   }
+
+  bool
+  is_valid_unicode_codepoint(char32_t c)
+  {
+    return !(c > 0x10ffff
+      || (c & 0xfffe) == 0xfffe
+      || (c >= 0xd800 && c <= 0xdfff)
+      || (c >= 0xfdd0 && c <= 0xfdef));
+  }
+
+  void
+  utf8_encode_codepoint(char32_t c, std::string& output)
+  {
+    if (c <= 0x7f)
+    {
+      output.append(1, static_cast<char>(c));
+    }
+    else if (c <= 0x07ff)
+    {
+      output.append(1, static_cast<char>(0xc0 | ((c & 0x7c0) >> 6)));
+      output.append(1, static_cast<char>(0x80 | (c & 0x3f)));
+    }
+    else if (c <= 0xffff)
+    {
+      output.append(1, static_cast<char>(0xe0 | ((c & 0xf000)) >> 12));
+      output.append(1, static_cast<char>(0x80 | ((c & 0xfc0)) >> 6));
+      output.append(1, static_cast<char>(0x80 | (c & 0x3f)));
+    } else {
+      output.append(1, static_cast<char>(0xf0 | ((c & 0x1c0000) >> 18)));
+      output.append(1, static_cast<char>(0x80 | ((c & 0x3f000) >> 12)));
+      output.append(1, static_cast<char>(0x80 | ((c & 0xfc0) >> 6)));
+      output.append(1, static_cast<char>(0x80 | (c & 0x3f)));
+    }
+  }
 }
