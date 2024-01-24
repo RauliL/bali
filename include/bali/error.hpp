@@ -3,7 +3,7 @@
 #include <iostream>
 #include <optional>
 
-namespace lisp
+namespace bali
 {
   class error final
   {

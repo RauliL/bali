@@ -5,11 +5,13 @@
 #include <string>
 #include <vector>
 
-namespace lisp
+namespace bali
 {
   class value
   {
   public:
+    using ptr = std::shared_ptr<value>;
+
     enum class type
     {
       atom,
@@ -71,7 +73,7 @@ namespace lisp
   class value::list final : public value
   {
   public:
-    using value_type = std::shared_ptr<value>;
+    using value_type = ptr;
     using container_type = std::vector<value_type>;
     using iterator = container_type::const_iterator;
 
@@ -95,29 +97,12 @@ namespace lisp
     const container_type m_elements;
   };
 
-  std::shared_ptr<value> eval(
-    const std::shared_ptr<class value>& value
-  );
-
-  std::string to_atom(
-    const std::shared_ptr<class value>& value
-  );
-
-  bool to_bool(
-    const std::shared_ptr<class value>& value
-  );
-
-  value::list::container_type to_list(
-    const std::shared_ptr<class value>& value
-  );
-
-  double to_number(
-    const std::shared_ptr<class value>& value
-  );
-
-  std::string to_string(
-    const std::shared_ptr<class value>& value
-  );
+  value::ptr eval(const value::ptr& value);
+  std::string to_atom(const value::ptr& value);
+  bool to_bool(const value::ptr& value);
+  value::list::container_type to_list(const value::ptr& value);
+  double to_number(const value::ptr& value);
+  std::string to_string(const value::ptr&);
 
   std::shared_ptr<value::atom> make_bool(
     bool value,
@@ -140,5 +125,5 @@ namespace lisp
     const std::optional<int>& column = std::nullopt
   );
 
-  std::ostream& operator<<(std::ostream&, const std::shared_ptr<value>&);
+  std::ostream& operator<<(std::ostream& os, const value::ptr& value);
 }

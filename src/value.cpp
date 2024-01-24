@@ -2,59 +2,16 @@
 #include <iostream>
 #include <unordered_map>
 
-#include <lisp/error.hpp>
-#include <lisp/value.hpp>
+#include <bali/error.hpp>
+#include <bali/utils.hpp>
+#include <bali/value.hpp>
 
 #if !defined(BUFSIZ)
 #  define BUFSIZ 1024
 #endif
 
-namespace lisp
+namespace bali
 {
-  static inline bool
-  is_number(const std::string& input)
-  {
-    const auto length = input.length();
-    std::string::size_type start;
-    bool dot_seen = false;
-
-    if (!length)
-    {
-      return false;
-    }
-
-    if (input[0] == '+' || input[1] == '-')
-    {
-      start = 1;
-      if (length < 2)
-      {
-        return false;
-      }
-    } else {
-      start = 0;
-    }
-
-    for (std::string::size_type i = start; i < length; ++i)
-    {
-      const auto& c = input[i];
-
-      if (c == '.')
-      {
-        if (dot_seen || i == start || i + 1 > length)
-        {
-          return false;
-        }
-        dot_seen = true;
-      }
-      else if (!std::isdigit(c))
-      {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   value::value(
     const std::optional<int>& line,
     const std::optional<int>& column
@@ -79,7 +36,7 @@ namespace lisp
     , m_elements(elements) {}
 
   std::string
-  to_atom(const std::shared_ptr<class value>& value)
+  to_atom(const value::ptr& value)
   {
     const auto result = eval(value);
 
@@ -96,7 +53,7 @@ namespace lisp
   }
 
   bool
-  to_bool(const std::shared_ptr<class value>& value)
+  to_bool(const value::ptr& value)
   {
     const auto result = eval(value);
 
@@ -115,7 +72,7 @@ namespace lisp
   }
 
   value::list::container_type
-  to_list(const std::shared_ptr<class value>& value)
+  to_list(const value::ptr& value)
   {
     const auto result = eval(value);
 
@@ -132,7 +89,7 @@ namespace lisp
   }
 
   double
-  to_number(const std::shared_ptr<class value>& value)
+  to_number(const value::ptr& value)
   {
     const auto result = eval(value);
 
@@ -142,7 +99,7 @@ namespace lisp
         result
       )->symbol();
 
-      if (is_number(symbol))
+      if (utils::is_number(symbol))
       {
         return std::stod(symbol);
       }
@@ -156,7 +113,7 @@ namespace lisp
   }
 
   std::string
-  to_string(const std::shared_ptr<class value>& value)
+  to_string(const value::ptr& value)
   {
     if (value)
     {
@@ -233,7 +190,7 @@ namespace lisp
   }
 
   std::ostream&
-  operator<<(std::ostream& os, const std::shared_ptr<class value>& value)
+  operator<<(std::ostream& os, const value::ptr& value)
   {
     os << to_string(value);
 

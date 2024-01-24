@@ -1,12 +1,12 @@
 #include <fstream>
 #include <unordered_map>
 
-#include <lisp/error.hpp>
-#include <lisp/parser.hpp>
+#include <bali/error.hpp>
+#include <bali/parser.hpp>
 
-namespace lisp
+namespace bali
 {
-  using callback_type = std::shared_ptr<value>(*)(
+  using callback_type = value::ptr(*)(
     value::list::iterator&,
     const value::list::iterator&
   );
@@ -18,7 +18,7 @@ namespace lisp
   );
   static inline function_map_type::const_iterator function_map_end();
 
-  static inline std::shared_ptr<value>
+  static inline value::ptr
   eat(
     const char* function,
     value::list::iterator& it,
@@ -46,7 +46,7 @@ namespace lisp
     }
   }
 
-  static inline std::shared_ptr<value>
+  static inline value::ptr
   compare(
     const char* function,
     compare_callback_type callback,
@@ -70,7 +70,7 @@ namespace lisp
     return make_bool(true);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_add(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -86,7 +86,7 @@ namespace lisp
     return make_number(result);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_substract(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -108,7 +108,7 @@ namespace lisp
     return make_number(result);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_multiply(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -124,7 +124,7 @@ namespace lisp
     return make_number(result);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_divide(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -151,7 +151,7 @@ namespace lisp
     return make_number(result);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_eq(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -168,7 +168,7 @@ namespace lisp
     );
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_lt(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -185,7 +185,7 @@ namespace lisp
     );
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_gt(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -202,7 +202,7 @@ namespace lisp
     );
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_lte(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -219,7 +219,7 @@ namespace lisp
     );
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_gte(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -236,7 +236,7 @@ namespace lisp
     );
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_length(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -245,7 +245,7 @@ namespace lisp
     return make_number(to_list(eat("length", it, end)).size());
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_cons(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -262,7 +262,7 @@ namespace lisp
     return make_list(result);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_car(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -278,7 +278,7 @@ namespace lisp
     throw error("car: Empty list.");
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_cdr(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -297,7 +297,7 @@ namespace lisp
     throw error("cdr: Empty list.");
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_list(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -313,7 +313,7 @@ namespace lisp
     return make_list(result);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_append(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -331,7 +331,7 @@ namespace lisp
     return make_list(result);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_not(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -344,7 +344,7 @@ namespace lisp
     return make_bool(!condition);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_and(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -361,7 +361,7 @@ namespace lisp
     return make_bool(true);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_or(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -378,7 +378,7 @@ namespace lisp
     return make_bool(false);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_if(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -393,7 +393,7 @@ namespace lisp
     return eval(to_bool(condition) ? then_value : else_value);
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_quote(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -406,7 +406,7 @@ namespace lisp
     return result;
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_apply(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -426,7 +426,7 @@ namespace lisp
     throw error("apply: unrecognized function: `" + id + "'");
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_load(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -455,7 +455,7 @@ namespace lisp
     return nullptr;
   }
 
-  static std::shared_ptr<value>
+  static value::ptr
   function_write(
     value::list::iterator& it,
     const value::list::iterator& end
@@ -517,8 +517,8 @@ namespace lisp
     return std::end(function_map);
   }
 
-  std::shared_ptr<value>
-  eval(const std::shared_ptr<class value>& value)
+  value::ptr
+  eval(const value::ptr& value)
   {
     if (!value)
     {

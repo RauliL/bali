@@ -1,8 +1,8 @@
 #pragma once
 
-#include <lisp/value.hpp>
+#include <bali/value.hpp>
 
-namespace lisp
+namespace bali
 {
   class parser final
   {
@@ -17,7 +17,7 @@ namespace lisp
 
   private:
     void skip_whitespace();
-    std::shared_ptr<value> parse_value();
+    value::ptr parse_value();
     bool eof() const;
     char read();
     bool peek(char input) const;

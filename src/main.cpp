@@ -6,8 +6,8 @@
 
 #include <peelo/prompt.hpp>
 
-#include <lisp/error.hpp>
-#include <lisp/parser.hpp>
+#include <bali/error.hpp>
+#include <bali/parser.hpp>
 
 static void
 count_open_parenthesis(const std::string& input, int& count)
@@ -41,16 +41,16 @@ repl()
     count_open_parenthesis(*line, parenthesis_counter);
     if (parenthesis_counter == 0)
     {
-      lisp::parser parser(script, line_counter);
+      bali::parser parser(script, line_counter);
 
       try
       {
         for (const auto& value : parser.parse())
         {
-          std::cout << lisp::eval(value) << std::endl;
+          std::cout << bali::eval(value) << std::endl;
         }
       }
-      catch (lisp::error& e)
+      catch (bali::error& e)
       {
         std::cout << e << std::endl;
       }
@@ -66,16 +66,16 @@ run_file(std::istream& file)
     std::istreambuf_iterator<char>(file),
     std::istreambuf_iterator<char>()
   );
-  lisp::parser parser(source);
+  bali::parser parser(source);
 
   try
   {
     for (const auto& value : parser.parse())
     {
-      lisp::eval(value);
+      bali::eval(value);
     }
   }
-  catch (lisp::error& e)
+  catch (bali::error& e)
   {
     std::cerr << e << std::endl;
     std::exit(EXIT_FAILURE);

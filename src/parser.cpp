@@ -1,9 +1,9 @@
 #include <cctype>
 
-#include <lisp/error.hpp>
-#include <lisp/parser.hpp>
+#include <bali/error.hpp>
+#include <bali/parser.hpp>
 
-namespace lisp
+namespace bali
 {
   static inline bool
   isspace(char c)
@@ -64,7 +64,7 @@ namespace lisp
     }
   }
 
-  std::shared_ptr<value>
+  value::ptr
   parser::parse_value()
   {
     int line;
@@ -99,7 +99,7 @@ namespace lisp
         elements.push_back(parse_value());
       }
 
-      return std::make_shared<value::list>(elements, line, column);
+      return make_list(elements, line, column);
     }
     else if (peek_read('\''))
     {

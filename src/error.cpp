@@ -1,6 +1,6 @@
-#include <lisp/error.hpp>
+#include <bali/error.hpp>
 
-namespace lisp
+namespace bali
 {
   error::error(
     const std::string& message,
