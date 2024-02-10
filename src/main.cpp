@@ -26,7 +26,7 @@ count_open_parenthesis(const std::string& input, int& count)
 }
 
 static void
-repl()
+repl(std::unordered_map<std::string, bali::value::ptr>& scope)
 {
   peelo::prompt prompt;
   std::string script;
@@ -47,7 +47,7 @@ repl()
       {
         for (const auto& value : parser.parse())
         {
-          std::cout << bali::eval(value) << std::endl;
+          std::cout << bali::eval(value, scope) << std::endl;
         }
       }
       catch (bali::error& e)
@@ -60,7 +60,10 @@ repl()
 }
 
 static void
-run_file(std::istream& file)
+run_file(
+  std::istream& file,
+  std::unordered_map<std::string, bali::value::ptr>& scope
+)
 {
   const auto source = std::string(
     std::istreambuf_iterator<char>(file),
@@ -72,7 +75,7 @@ run_file(std::istream& file)
   {
     for (const auto& value : parser.parse())
     {
-      bali::eval(value);
+      bali::eval(value, scope);
     }
   }
   catch (bali::error& e)
@@ -85,6 +88,8 @@ run_file(std::istream& file)
 int
 main(int argc, char** argv)
 {
+  std::unordered_map<std::string, bali::value::ptr> scope;
+
   if (argc > 2)
   {
     std::cerr << "Usage: " << argv[0] << " [filename]" << std::endl;
@@ -104,14 +109,14 @@ main(int argc, char** argv)
         << std::endl;
       std::exit(EXIT_FAILURE);
     }
-    run_file(file);
+    run_file(file, scope);
     file.close();
   }
   else if (isatty(fileno(stdin)))
   {
-    repl();
+    repl(scope);
   } else {
-    run_file(std::cin);
+    run_file(std::cin, scope);
   }
 
   return EXIT_SUCCESS;
