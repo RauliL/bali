@@ -1,9 +1,11 @@
 #!/usr/bin/env bali
 
+(let x 3)
+
 (write
   (append
     (if
-      (> 10 2)
+      (> x 2)
       '(Hello)
       '(Goodbye))
     '(World!)))

@@ -35,9 +35,12 @@ namespace bali
     , m_elements(elements) {}
 
   std::string
-  to_atom(const value::ptr& value)
+  to_atom(
+    const value::ptr& value,
+    std::unordered_map<std::string, value::ptr>& scope
+  )
   {
-    const auto result = eval(value);
+    const auto result = eval(value, scope);
 
     if (result && result->type() == value::type::atom)
     {
@@ -52,9 +55,12 @@ namespace bali
   }
 
   bool
-  to_bool(const value::ptr& value)
+  to_bool(
+    const value::ptr& value,
+    std::unordered_map<std::string, value::ptr>& scope
+  )
   {
-    const auto result = eval(value);
+    const auto result = eval(value, scope);
 
     if (!result)
     {
@@ -71,9 +77,12 @@ namespace bali
   }
 
   value::list::container_type
-  to_list(const value::ptr& value)
+  to_list(
+    const value::ptr& value,
+    std::unordered_map<std::string, value::ptr>& scope
+  )
   {
-    const auto result = eval(value);
+    const auto result = eval(value, scope);
 
     if (result && result->type() == value::type::list)
     {
@@ -82,15 +91,18 @@ namespace bali
 
     throw error(
       "Value is not a list.",
-      value? value->line() : std::nullopt,
-      value? value->column() : std::nullopt
+      value ? value->line() : std::nullopt,
+      value ? value->column() : std::nullopt
     );
   }
 
   double
-  to_number(const value::ptr& value)
+  to_number(
+    const value::ptr& value,
+    std::unordered_map<std::string, value::ptr>& scope
+  )
   {
-    const auto result = eval(value);
+    const auto result = eval(value, scope);
 
     if (result && result->type() == value::type::atom)
     {
