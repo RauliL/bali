@@ -97,7 +97,7 @@ namespace bali
 
     if (result && result->type() == value::type::atom)
     {
-      return std::static_pointer_cast<value::atom>(value)->symbol();
+      return std::static_pointer_cast<value::atom>(result)->symbol();
     }
 
     throw error(
