@@ -1,7 +1,8 @@
 #pragma once
 
-#include <iostream>
 #include <optional>
+
+#include <bali/value.hpp>
 
 namespace bali
 {
@@ -40,4 +41,26 @@ namespace bali
   };
 
   std::ostream& operator<<(std::ostream&, const error&);
+
+  class function_return final
+  {
+  public:
+    using value_type = bali::value::ptr;
+    using reference = value_type&;
+    using const_reference = const value_type&;
+
+    explicit function_return(const_reference value = nullptr);
+    function_return(const function_return&) = default;
+    function_return(function_return&&) = default;
+    function_return& operator=(const function_return&) = default;
+    function_return& operator=(function_return&&) = default;
+
+    inline const_reference value() const
+    {
+      return m_value;
+    }
+
+  private:
+    value_type m_value;
+  };
 }

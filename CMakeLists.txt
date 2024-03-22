@@ -28,6 +28,20 @@ TARGET_COMPILE_FEATURES(
     cxx_std_17
 )
 
+IF(MSVC)
+  TARGET_COMPILE_OPTIONS(
+    ${PROJECT_NAME}
+    PRIVATE
+      /W4 /WX
+  )
+ELSE()
+  TARGET_COMPILE_OPTIONS(
+    ${PROJECT_NAME}
+    PRIVATE
+      -Wall -Werror
+  )
+ENDIF()
+
 INSTALL(
   TARGETS
     ${PROJECT_NAME}

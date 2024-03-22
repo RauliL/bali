@@ -27,4 +27,7 @@ namespace bali
 
     return os;
   }
+
+  function_return::function_return(const_reference value)
+    : m_value(value) {}
 }

@@ -7,6 +7,7 @@
 #include <peelo/prompt.hpp>
 
 #include <bali/error.hpp>
+#include <bali/eval.hpp>
 #include <bali/parser.hpp>
 
 static void
@@ -26,7 +27,7 @@ count_open_parenthesis(const std::string& input, int& count)
 }
 
 static void
-repl(std::unordered_map<std::string, bali::value::ptr>& scope)
+repl(const std::shared_ptr<bali::scope>& scope)
 {
   peelo::prompt prompt;
   std::string script;
@@ -54,6 +55,10 @@ repl(std::unordered_map<std::string, bali::value::ptr>& scope)
       {
         std::cout << e << std::endl;
       }
+      catch (bali::function_return&)
+      {
+        std::cout << "Unexpected `return'." << std::endl;
+      }
       script.clear();
     }
   }
@@ -62,7 +67,7 @@ repl(std::unordered_map<std::string, bali::value::ptr>& scope)
 static void
 run_file(
   std::istream& file,
-  std::unordered_map<std::string, bali::value::ptr>& scope
+  const std::shared_ptr<bali::scope>& scope
 )
 {
   const auto source = std::string(
@@ -83,12 +88,17 @@ run_file(
     std::cerr << e << std::endl;
     std::exit(EXIT_FAILURE);
   }
+  catch (bali::function_return&)
+  {
+    std::cerr << "Unexpected `return'." << std::endl;
+    std::exit(EXIT_FAILURE);
+  }
 }
 
 int
 main(int argc, char** argv)
 {
-  std::unordered_map<std::string, bali::value::ptr> scope;
+  auto scope = std::make_shared<bali::scope>();
 
   if (argc > 2)
   {

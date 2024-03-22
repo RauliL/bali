@@ -2,14 +2,17 @@
 
 Minimal [Lisp] interpreter implementation that I wrote just for fun and to
 test some things. It only has two data types: atoms and lists. It does not
-support anything useful such as custom functions. It's just a list processor.
+support anything useful but is instead just a list processor.
 
 ## Design
 
-Only two data types are available: Atoms that are just pieces of text that are
-handled as boolean values, numbers or strings depending on the context and
-lists that are handled as lists of data or function calls depending on the
-context.
+Only three data types are available:
+
+- Atoms are just pieces of text that are handled as boolean values, numbers
+  or strings depending on the context.
+- Lists that are handled as lists of data or function calls depending on the
+  context.
+- Functions that can be either anonymous or callable by name.
 
 Special atom called `nil` is treated as an empty/missing value as well as falsy
 boolean value. In boolean context every other value than `nil` is treated as
@@ -44,7 +47,11 @@ List: `length`, `cons`, `car`, `cdr`, `list`, `append`.
 
 Boolean: `not`, `and`, `or`, `if`.
 
-Utilities: `let`, `quote`, `apply`, `load`, `write`.
+Variables: `setq`, `let`.
+
+Functions: `apply`, `defun`, `lambda`, `return`.
+
+Utilities: `quote`, `load`, `write`.
 
 [Lisp]: https://en.wikipedia.org/wiki/Lisp_(programming_language)
 [shebangs]: https://en.wikipedia.org/wiki/Shebang_(Unix)
