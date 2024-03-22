@@ -251,7 +251,11 @@ namespace bali
     const std::shared_ptr<class scope>& scope
   )
   {
-    return make_number(to_list(eat("length", it, end), scope).size());
+    const auto list = to_list(eat("length", it, end), scope);
+
+    finish("length", it, end);
+
+    return make_number(list.size());
   }
 
   static value::ptr
@@ -265,6 +269,7 @@ namespace bali
     const auto tail = to_list(eat("cons", it, end), scope);
     value::list::container_type result;
 
+    finish("cons", it, end);
     result.reserve(tail.size() + 1);
     result.push_back(head);
     result.insert(std::end(result), std::begin(tail), std::end(tail));
@@ -281,6 +286,7 @@ namespace bali
   {
     const auto list = to_list(eat("car", it, end), scope);
 
+    finish("car", it, end);
     if (list.size() > 0)
     {
       return list[0];
@@ -298,6 +304,7 @@ namespace bali
   {
     const auto list = to_list(eat("cdr", it, end), scope);
 
+    finish("cdr", it, end);
     if (list.size() > 0)
     {
       return make_list(value::list::container_type(
@@ -425,6 +432,7 @@ namespace bali
     const auto name = to_atom(eat("setq", it, end), scope);
     const auto value = eval(eat("setq", it, end), scope);
 
+    finish("setq", it, end);
     scope->set(name, value);
 
     return value;
@@ -590,10 +598,7 @@ namespace bali
     const auto filename = to_atom(eat("load", it, end), scope);
 
     finish("load", it, end);
-
-    std::ifstream file(filename);
-
-    if (file.good())
+    if (auto file = std::ifstream(filename))
     {
       const auto source = std::string(
         std::istreambuf_iterator<char>(file),
@@ -605,6 +610,8 @@ namespace bali
       {
         eval(value, scope);
       }
+    } else {
+      throw error("Unable to open file `" + filename + "'.");
     }
 
     return nullptr;
