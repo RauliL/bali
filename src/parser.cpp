@@ -27,7 +27,7 @@ namespace bali
         {
           break;
         }
-        ++m_pos;
+        read();
       }
     }
 
