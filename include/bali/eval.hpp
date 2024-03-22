@@ -21,6 +21,11 @@ namespace bali
     const std::shared_ptr<class scope>& scope
   );
 
+  std::shared_ptr<value::cons> to_cons(
+    const value::ptr& value,
+    const std::shared_ptr<class scope>& scope
+  );
+
   const value::list::container_type&
   to_list(
     const value::ptr& value,

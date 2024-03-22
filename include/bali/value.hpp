@@ -16,11 +16,13 @@ namespace bali
     enum class type
     {
       atom,
+      cons,
       function,
       list,
     };
 
     class atom;
+    class cons;
     class function;
     class list;
 
@@ -115,6 +117,59 @@ namespace bali
 
   private:
     const value_type m_symbol;
+  };
+
+  class value::cons final : public value
+  {
+  public:
+    using size_type = std::size_t;
+
+    static inline std::shared_ptr<cons> make(
+      const ptr& car,
+      const ptr& cdr = nullptr,
+      const std::optional<int>& line = std::nullopt,
+      const std::optional<int>& column = std::nullopt
+    )
+    {
+      return std::shared_ptr<cons>(new cons(
+        car,
+        cdr,
+        line,
+        column
+      ));
+    }
+
+    inline enum type type() const
+    {
+      return type::cons;
+    }
+
+    size_type length() const;
+
+    inline const ptr& car() const
+    {
+      return m_car;
+    }
+
+    inline const ptr& cdr() const
+    {
+      return m_cdr;
+    }
+
+  protected:
+    std::string to_string() const;
+
+  private:
+    explicit cons(
+      const ptr& car,
+      const ptr& cdr = nullptr,
+      const std::optional<int>& line = std::nullopt,
+      const std::optional<int>& column = std::nullopt
+    );
+
+  private:
+    const ptr m_car;
+    const ptr m_cdr;
   };
 
   class value::list final : public value

@@ -251,11 +251,11 @@ namespace bali
     const std::shared_ptr<class scope>& scope
   )
   {
-    const auto list = to_list(eat("length", it, end), scope);
+    const auto cons = to_cons(eat("length", it, end), scope);
 
     finish("length", it, end);
 
-    return value::atom::make_number(list.size());
+    return value::atom::make_number(cons->length());
   }
 
   static value::ptr
@@ -265,16 +265,12 @@ namespace bali
     const std::shared_ptr<class scope>& scope
   )
   {
-    const auto head = eval(eat("cons", it, end), scope);
-    const auto tail = to_list(eat("cons", it, end), scope);
-    value::list::container_type result;
+    const auto car = eval(eat("cons", it, end), scope);
+    const auto cdr = eval(eat("cons", it, end), scope);
 
     finish("cons", it, end);
-    result.reserve(tail.size() + 1);
-    result.push_back(head);
-    result.insert(std::end(result), std::begin(tail), std::end(tail));
 
-    return value::list::make(result);
+    return value::cons::make(car, cdr);
   }
 
   static value::ptr
@@ -284,15 +280,11 @@ namespace bali
     const std::shared_ptr<class scope>& scope
   )
   {
-    const auto list = to_list(eat("car", it, end), scope);
+    const auto cons = to_cons(eat("car", it, end), scope);
 
     finish("car", it, end);
-    if (list.size() > 0)
-    {
-      return list[0];
-    }
 
-    throw error("car: Empty list.");
+    return cons->car();
   }
 
   static value::ptr
@@ -302,20 +294,11 @@ namespace bali
     const std::shared_ptr<class scope>& scope
   )
   {
-    const auto list = to_list(eat("cdr", it, end), scope);
+    const auto cons = to_cons(eat("cdr", it, end), scope);
 
     finish("cdr", it, end);
-    if (list.size() > 0)
-    {
-      return value::list::make(
-        value::list::container_type(
-          std::begin(list) + 1,
-          std::end(list)
-        )
-      );
-    }
 
-    throw error("cdr: Empty list.");
+    return cons->cdr();
   }
 
   static value::ptr

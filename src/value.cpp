@@ -40,6 +40,42 @@ namespace bali
     : value::value(line, column)
     , m_symbol(symbol) {}
 
+  value::cons::cons(
+    const ptr& car,
+    const ptr& cdr,
+    const std::optional<int>& line,
+    const std::optional<int>& column
+  )
+    : value::value(line, column)
+    , m_car(car)
+    , m_cdr(cdr) {}
+
+  value::cons::size_type
+  value::cons::length() const
+  {
+    if (m_cdr)
+    {
+      if (m_cdr->type() == type::cons)
+      {
+        return std::static_pointer_cast<cons>(m_cdr)->length() + 1;
+      }
+
+      return 2;
+    }
+
+    return 1;
+  }
+
+  std::string
+  value::cons::to_string() const
+  {
+    return "(" +
+      value::to_string(m_car) +
+      " . " +
+      value::to_string(m_cdr) +
+      ")";
+  }
+
   value::list::list(
     const container_type& elements,
     const std::optional<int>& line,
@@ -142,7 +178,7 @@ namespace bali
       result += m_parameters[i];
     }
 
-    return result + ") " + value::to_string(m_expression) + ')';
+    return result;
   }
 
   std::ostream&
