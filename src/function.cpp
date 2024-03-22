@@ -61,12 +61,12 @@ namespace bali
       {
         if (!callback(operand, to_number(*it++, scope)))
         {
-          return make_bool(false);
+          return value::atom::make_bool(false);
         }
       }
     }
 
-    return make_bool(true);
+    return value::atom::make_bool(true);
   }
 
   static value::ptr
@@ -83,7 +83,7 @@ namespace bali
       result += to_number(*it++, scope);
     }
 
-    return make_number(result);
+    return value::atom::make_number(result);
   }
 
   static value::ptr
@@ -106,7 +106,7 @@ namespace bali
       result = -result;
     }
 
-    return make_number(result);
+    return value::atom::make_number(result);
   }
 
   static value::ptr
@@ -123,7 +123,7 @@ namespace bali
       result *= to_number(*it++, scope);
     }
 
-    return make_number(result);
+    return value::atom::make_number(result);
   }
 
   static value::ptr
@@ -151,7 +151,7 @@ namespace bali
     }
     while (it != end);
 
-    return make_number(result);
+    return value::atom::make_number(result);
   }
 
   static value::ptr
@@ -255,7 +255,7 @@ namespace bali
 
     finish("length", it, end);
 
-    return make_number(list.size());
+    return value::atom::make_number(list.size());
   }
 
   static value::ptr
@@ -274,7 +274,7 @@ namespace bali
     result.push_back(head);
     result.insert(std::end(result), std::begin(tail), std::end(tail));
 
-    return make_list(result);
+    return value::list::make(result);
   }
 
   static value::ptr
@@ -307,9 +307,11 @@ namespace bali
     finish("cdr", it, end);
     if (list.size() > 0)
     {
-      return make_list(value::list::container_type(
-        std::begin(list) + 1,
-        std::end(list))
+      return value::list::make(
+        value::list::container_type(
+          std::begin(list) + 1,
+          std::end(list)
+        )
       );
     }
 
@@ -330,7 +332,7 @@ namespace bali
       result.push_back(eval(*it++, scope));
     }
 
-    return make_list(result);
+    return value::list::make(result);
   }
 
   static value::ptr
@@ -349,7 +351,7 @@ namespace bali
       result.insert(std::end(result), std::begin(list), std::end(list));
     }
 
-    return make_list(result);
+    return value::list::make(result);
   }
 
   static value::ptr
@@ -363,7 +365,7 @@ namespace bali
 
     finish("not", it, end);
 
-    return make_bool(!condition);
+    return value::atom::make_bool(!condition);
   }
 
   static value::ptr
@@ -377,11 +379,11 @@ namespace bali
     {
       if (!to_bool(*it++, scope))
       {
-        return make_bool(false);
+        return value::atom::make_bool(false);
       }
     }
 
-    return make_bool(true);
+    return value::atom::make_bool(true);
   }
 
   static value::ptr
@@ -395,11 +397,11 @@ namespace bali
     {
       if (to_bool(*it++, scope))
       {
-        return make_bool(true);
+        return value::atom::make_bool(true);
       }
     }
 
-    return make_bool(false);
+    return value::atom::make_bool(false);
   }
 
   static value::ptr
@@ -585,7 +587,7 @@ namespace bali
       parameters.push_back(to_atom(parameter, nullptr));
     }
 
-    return make_function(parameters, expression);
+    return value::function::make(parameters, expression);
   }
 
   static value::ptr
@@ -712,7 +714,7 @@ namespace bali
     const value::ptr& expression
   )
   {
-    auto function = make_function(parameters, expression, name);
+    const auto function = value::function::make(parameters, expression, name);
 
     custom_function_map[name] = function;
 

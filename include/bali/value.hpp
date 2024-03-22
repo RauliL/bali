@@ -24,6 +24,11 @@ namespace bali
     class function;
     class list;
 
+    static inline std::string to_string(const ptr& value)
+    {
+      return value ? value->to_string() : "nil";
+    }
+
     explicit value(
       const std::optional<int>& line = std::nullopt,
       const std::optional<int>& column = std::nullopt
@@ -45,6 +50,9 @@ namespace bali
       return m_column;
     }
 
+  protected:
+    virtual std::string to_string() const = 0;
+
   private:
     const std::optional<int> m_line;
     const std::optional<int> m_column;
@@ -53,8 +61,31 @@ namespace bali
   class value::atom final : public value
   {
   public:
-    explicit atom(
-      const std::string& symbol,
+    using value_type = std::string;
+    using const_reference = const value_type&;
+
+    static inline std::shared_ptr<atom> make(
+      const_reference symbol,
+      const std::optional<int>& line = std::nullopt,
+      const std::optional<int>& column = std::nullopt
+    )
+    {
+      return std::shared_ptr<atom>(new atom(symbol, line, column));
+    }
+
+    static inline std::shared_ptr<atom> make_bool(
+      bool value,
+      const std::optional<int>& line = std::nullopt,
+      const std::optional<int>& column = std::nullopt
+    )
+    {
+      return value
+        ? std::shared_ptr<atom>(new atom("true", line, column))
+        : nullptr;
+    }
+
+    static std::shared_ptr<atom> make_number(
+      double value,
       const std::optional<int>& line = std::nullopt,
       const std::optional<int>& column = std::nullopt
     );
@@ -64,13 +95,26 @@ namespace bali
       return type::atom;
     }
 
-    inline const std::string& symbol() const
+    inline const_reference symbol() const
+    {
+      return m_symbol;
+    }
+
+  protected:
+    inline std::string to_string() const
     {
       return m_symbol;
     }
 
   private:
-    const std::string m_symbol;
+    explicit atom(
+      const_reference symbol,
+      const std::optional<int>& line = std::nullopt,
+      const std::optional<int>& column = std::nullopt
+    );
+
+  private:
+    const value_type m_symbol;
   };
 
   class value::list final : public value
@@ -80,11 +124,14 @@ namespace bali
     using container_type = std::vector<value_type>;
     using iterator = container_type::const_iterator;
 
-    explicit list(
+    static inline std::shared_ptr<list> make(
       const container_type& elements,
       const std::optional<int>& line = std::nullopt,
       const std::optional<int>& column = std::nullopt
-    );
+    )
+    {
+      return std::shared_ptr<list>(new list(elements, line, column));
+    }
 
     inline enum type type() const
     {
@@ -96,6 +143,16 @@ namespace bali
       return m_elements;
     }
 
+  protected:
+    std::string to_string() const;
+
+  private:
+    explicit list(
+      const container_type& elements,
+      const std::optional<int>& line = std::nullopt,
+      const std::optional<int>& column = std::nullopt
+    );
+
   private:
     const container_type m_elements;
   };
@@ -103,13 +160,23 @@ namespace bali
   class value::function final : public value
   {
   public:
-    explicit function(
+    static inline std::shared_ptr<function>
+    make(
       const std::vector<std::string>& parameters,
       const ptr& expression,
-      const std::optional<std::string>& name,
+      const std::optional<std::string>& name = std::nullopt,
       const std::optional<int>& line = std::nullopt,
       const std::optional<int>& column = std::nullopt
-    );
+    )
+    {
+      return std::shared_ptr<function>(new function(
+        parameters,
+        expression,
+        name,
+        line,
+        column
+      ));
+    }
 
     inline enum type type() const
     {
@@ -127,41 +194,23 @@ namespace bali
       const std::shared_ptr<class scope>& scope
     ) const;
 
+  protected:
+    std::string to_string() const;
+
+  private:
+    explicit function(
+      const std::vector<std::string>& parameters,
+      const ptr& expression,
+      const std::optional<std::string>& name,
+      const std::optional<int>& line = std::nullopt,
+      const std::optional<int>& column = std::nullopt
+    );
+
   private:
     const std::vector<std::string> m_parameters;
     const ptr m_expression;
     const std::optional<std::string> m_name;
   };
-
-  std::string to_string(const value::ptr&);
-
-  std::shared_ptr<value::atom> make_bool(
-    bool value,
-    const std::optional<int>& line = std::nullopt,
-    const std::optional<int>& column = std::nullopt
-  );
-  std::shared_ptr<value::atom> make_number(
-    double value,
-    const std::optional<int>& line = std::nullopt,
-    const std::optional<int>& column = std::nullopt
-  );
-  std::shared_ptr<value::atom> make_atom(
-    const std::string& symbol,
-    const std::optional<int>& line = std::nullopt,
-    const std::optional<int>& column = std::nullopt
-  );
-  std::shared_ptr<value::list> make_list(
-    const value::list::container_type& elements,
-    const std::optional<int>& line = std::nullopt,
-    const std::optional<int>& column = std::nullopt
-  );
-  std::shared_ptr<value::function> make_function(
-    const std::vector<std::string>& parameters,
-    const value::ptr& expression,
-    const std::optional<std::string>& name = std::nullopt,
-    const std::optional<int>& line = std::nullopt,
-    const std::optional<int>& column = std::nullopt
-  );
 
   std::ostream& operator<<(std::ostream& os, const value::ptr& value);
 }

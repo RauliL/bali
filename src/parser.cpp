@@ -95,13 +95,13 @@ namespace bali
         elements.push_back(parse_value());
       }
 
-      return make_list(elements, line, column);
+      return value::list::make(elements, line, column);
     }
     else if (peek_read('\''))
     {
-      return make_list(
+      return value::list::make(
         {
-          make_atom("quote", line, column),
+          value::atom::make("quote", line, column),
           parse_value()
         },
         line,
@@ -130,7 +130,7 @@ namespace bali
         }
       }
 
-      return make_atom(buffer, line, column);
+      return value::atom::make(buffer, line, column);
     } else {
       std::string buffer;
 
@@ -152,7 +152,7 @@ namespace bali
         *m_pos != '\''
       );
 
-      return make_atom(buffer, line, column);
+      return value::atom::make(buffer, line, column);
     }
   }
 

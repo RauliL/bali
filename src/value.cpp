@@ -18,6 +18,20 @@ namespace bali
     : m_line(line)
     , m_column(column) {}
 
+  std::shared_ptr<value::atom>
+  value::atom::make_number(
+    double value,
+    const std::optional<int>& line,
+    const std::optional<int>& column
+  )
+  {
+    char buffer[BUFSIZ];
+
+    std::snprintf(buffer, BUFSIZ, "%g", value);
+
+    return make(buffer, line, column);
+  }
+
   value::atom::atom(
     const std::string& symbol,
     const std::optional<int>& line,
@@ -33,6 +47,25 @@ namespace bali
   )
     : value::value(line, column)
     , m_elements(elements) {}
+
+  std::string
+  value::list::to_string() const
+  {
+    const auto size = m_elements.size();
+    std::string result(1, '(');
+
+    for (value::list::container_type::size_type i = 0; i < size; ++i)
+    {
+      if (i > 0)
+      {
+        result += ' ';
+      }
+      result += value::to_string(m_elements[i]);
+    }
+    result += ')';
+
+    return result;
+  }
 
   value::function::function(
     const std::vector<std::string>& parameters,
@@ -87,128 +120,35 @@ namespace bali
     }
   }
 
-  static std::string
-  list_to_string(const std::shared_ptr<value::list>& list)
+  std::string
+  value::function::to_string() const
   {
-    const auto& elements = list->elements();
-    const auto size = elements.size();
     std::string result(1, '(');
+    const auto parameters_size = m_parameters.size();
 
-    for (value::list::container_type::size_type i = 0; i < size; ++i)
+    if (m_name)
+    {
+      result += "defun " + *m_name;
+    } else {
+      result += "lambda ";
+    }
+    result += '(';
+    for (std::vector<std::string>::size_type i = 0; i < parameters_size; ++i)
     {
       if (i > 0)
       {
         result += ' ';
       }
-      result += to_string(elements[i]);
-    }
-    result += ')';
-
-    return result;
-  }
-
-  static std::string
-  function_to_string(const std::shared_ptr<value::function>& function)
-  {
-    if (const auto& name = function->name())
-    {
-      return "#'" + *name;
+      result += m_parameters[i];
     }
 
-    return "#<anonymous>";
-  }
-
-  std::string
-  to_string(const value::ptr& value)
-  {
-    if (!value)
-    {
-      return "nil";
-    }
-
-    switch (value->type())
-    {
-      case value::type::atom:
-        return std::static_pointer_cast<value::atom>(value)->symbol();
-
-      case value::type::list:
-        return list_to_string(std::static_pointer_cast<value::list>(value));
-
-      case value::type::function:
-        return function_to_string(
-          std::static_pointer_cast<value::function>(value)
-        );
-    }
-
-    return "<unknown>";
-  }
-
-  std::shared_ptr<value::atom>
-  make_bool(
-    bool value,
-    const std::optional<int>& line,
-    const std::optional<int>& column
-  )
-  {
-    return value ? std::make_shared<value::atom>("true") : nullptr;
-  }
-
-  std::shared_ptr<value::atom>
-  make_number(
-    double value,
-    const std::optional<int>& line,
-    const std::optional<int>& column
-  )
-  {
-    char buffer[BUFSIZ];
-
-    std::snprintf(buffer, BUFSIZ, "%g", value);
-
-    return std::make_shared<value::atom>(buffer, line, column);
-  }
-
-  std::shared_ptr<value::atom>
-  make_atom(
-    const std::string& value,
-    const std::optional<int>& line,
-    const std::optional<int>& column
-  )
-  {
-    return std::make_shared<value::atom>(value, line, column);
-  }
-
-  std::shared_ptr<value::list>
-  make_list(
-    const value::list::container_type& elements,
-    const std::optional<int>& line,
-    const std::optional<int>& column
-  )
-  {
-    return std::make_shared<value::list>(elements, line, column);
-  }
-
-  std::shared_ptr<value::function>
-  make_function(
-    const std::vector<std::string>& parameters,
-    const value::ptr& expression,
-    const std::optional<std::string>& name,
-    const std::optional<int>& line,
-    const std::optional<int>& column
-  )
-  {
-    return std::make_shared<value::function>(
-      parameters,
-      expression,
-      name,
-      line,
-      column
-    );
+    return result + ") " + value::to_string(m_expression) + ')';
   }
 
   std::ostream&
   operator<<(std::ostream& os, const value::ptr& value)
   {
-    os << to_string(value);
+    os << value::to_string(value);
 
     return os;
   }
