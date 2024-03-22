@@ -11,6 +11,10 @@ namespace bali
     std::string,
     builtin_function_callback_type
   >;
+  using custom_function_map_type = std::unordered_map<
+    std::string,
+    std::shared_ptr<value::function>
+  >;
   using compare_callback_type = bool(*)(double, double);
 
   static inline value::ptr
@@ -43,7 +47,6 @@ namespace bali
 
   static inline value::ptr
   compare(
-    const char* function,
     compare_callback_type callback,
     value::list::iterator& it,
     const value::list::iterator& end,
@@ -159,7 +162,6 @@ namespace bali
   )
   {
     return compare(
-      "=",
       [](double a, double b)
       {
         return a == b;
@@ -178,7 +180,6 @@ namespace bali
   )
   {
     return compare(
-      "<",
       [](double a, double b)
       {
         return a < b;
@@ -197,7 +198,6 @@ namespace bali
   )
   {
     return compare(
-      ">",
       [](double a, double b)
       {
         return a > b;
@@ -216,7 +216,6 @@ namespace bali
   )
   {
     return compare(
-      "<=",
       [](double a, double b)
       {
         return a <= b;
@@ -235,7 +234,6 @@ namespace bali
   )
   {
     return compare(
-      ">=",
       [](double a, double b)
       {
         return a >= b;
@@ -489,17 +487,75 @@ namespace bali
     const std::shared_ptr<class scope>& scope
   )
   {
-    const auto id = to_atom(eat("apply", it, end), scope);
+    const auto argument = eval(eat("apply", it, end), scope);
     const auto args = to_list(eat("apply", it, end), scope);
     auto begin = std::begin(args);
 
     finish("apply", it, end);
-    if (const auto function = find_builtin_function(id))
+    if (argument && argument->type() == value::type::function)
     {
-      return (*function)(begin, std::end(args), scope);
+      return std::static_pointer_cast<value::function>(argument)->call(
+        begin,
+        std::end(args),
+        scope
+      );
+    } else {
+      const auto id = to_atom(argument, nullptr);
+
+      if (const auto function = find_custom_function(id))
+      {
+        return function->call(begin, std::end(args), scope);
+      }
+      else if (const auto function = find_builtin_function(id))
+      {
+        return (*function)(begin, std::end(args), scope);
+      }
+
+      throw error("apply: unrecognized function: `" + id + "'");
+    }
+  }
+
+  static value::ptr
+  function_defun(
+    value::list::iterator& it,
+    const value::list::iterator& end,
+    const std::shared_ptr<scope>& scope
+  )
+  {
+    const auto name = to_atom(eat("defun", it, end), scope);
+    const auto raw_parameters = to_list(eat("defun", it, end), nullptr);
+    std::vector<std::string> parameters;
+    const auto expression = eat("defun", it, end);
+
+    finish("defun", it, end);
+    parameters.reserve(raw_parameters.size());
+    for (const auto& parameter : raw_parameters)
+    {
+      parameters.push_back(to_atom(parameter, nullptr));
     }
 
-    throw error("apply: unrecognized function: `" + id + "'");
+    return define_custom_function(name, parameters, expression);
+  }
+
+  static value::ptr
+  function_lambda(
+    value::list::iterator& it,
+    const value::list::iterator& end,
+    const std::shared_ptr<scope>&
+  )
+  {
+    const auto raw_parameters = to_list(eat("lambda", it, end), nullptr);
+    std::vector<std::string> parameters;
+    const auto expression = eat("lambda", it, end);
+
+    finish("lambda", it, end);
+    parameters.reserve(raw_parameters.size());
+    for (const auto& parameter : raw_parameters)
+    {
+      parameters.push_back(to_atom(parameter, nullptr));
+    }
+
+    return make_function(parameters, expression);
   }
 
   static value::ptr
@@ -582,6 +638,8 @@ namespace bali
 
     // Functions.
     { "apply", function_apply },
+    { "defun", function_defun },
+    { "lambda", function_lambda },
 
     // Misc stuff.
     { "quote", function_quote },
@@ -600,5 +658,34 @@ namespace bali
     }
 
     return std::nullopt;
+  }
+
+  static custom_function_map_type custom_function_map;
+
+  std::shared_ptr<value::function>
+  find_custom_function(const std::string& name)
+  {
+    const auto it = custom_function_map.find(name);
+
+    if (it != std::end(custom_function_map))
+    {
+      return it->second;
+    }
+
+    return nullptr;
+  }
+
+  std::shared_ptr<value::function>
+  define_custom_function(
+    const std::string& name,
+    const std::vector<std::string>& parameters,
+    const value::ptr& expression
+  )
+  {
+    auto function = make_function(parameters, expression, name);
+
+    custom_function_map[name] = function;
+
+    return function;
   }
 }

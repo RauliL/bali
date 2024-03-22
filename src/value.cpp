@@ -34,6 +34,52 @@ namespace bali
     : value::value(line, column)
     , m_elements(elements) {}
 
+  value::function::function(
+    const std::vector<std::string>& parameters,
+    const value::ptr& expression,
+    const std::optional<std::string>& name,
+    const std::optional<int>& line,
+    const std::optional<int>& column
+  )
+    : value::value(line, column)
+    , m_parameters(parameters)
+    , m_expression(expression)
+    , m_name(name) {}
+
+  static inline std::string
+  get_function_name(const std::optional<std::string>& name)
+  {
+    return name ? *name : "<anonymous>";
+  }
+
+  value::ptr
+  value::function::call(
+    value::list::iterator& begin,
+    const value::list::iterator& end,
+    const std::shared_ptr<class scope>& scope
+  ) const
+  {
+    auto function_scope =
+      m_parameters.empty()
+        ? scope
+        : std::make_shared<class scope>(scope);
+
+    for (const auto& parameter : m_parameters)
+    {
+      if (begin >= end)
+      {
+        throw error(get_function_name(m_name) + ": Not enough arguments.");
+      }
+      function_scope->let(parameter, *begin++);
+    }
+    if (begin != end)
+    {
+      throw error(get_function_name(m_name) + ": Too many arguments.");
+    }
+
+    return eval(m_expression, function_scope);
+  }
+
   std::string
   to_atom(
     const value::ptr& value,
@@ -128,7 +174,7 @@ namespace bali
   {
     const auto& elements = list->elements();
     const auto size = elements.size();
-    std::string result('(', 1);
+    std::string result(1, '(');
 
     for (value::list::container_type::size_type i = 0; i < size; ++i)
     {
@@ -141,6 +187,17 @@ namespace bali
     result += ')';
 
     return result;
+  }
+
+  static std::string
+  function_to_string(const std::shared_ptr<value::function>& function)
+  {
+    if (const auto& name = function->name())
+    {
+      return "#'" + *name;
+    }
+
+    return "#<anonymous>";
   }
 
   std::string
@@ -158,6 +215,11 @@ namespace bali
 
       case value::type::list:
         return list_to_string(std::static_pointer_cast<value::list>(value));
+
+      case value::type::function:
+        return function_to_string(
+          std::static_pointer_cast<value::function>(value)
+        );
     }
 
     return "<unknown>";
@@ -205,6 +267,24 @@ namespace bali
   )
   {
     return std::make_shared<value::list>(elements, line, column);
+  }
+
+  std::shared_ptr<value::function>
+  make_function(
+    const std::vector<std::string>& parameters,
+    const value::ptr& expression,
+    const std::optional<std::string>& name,
+    const std::optional<int>& line,
+    const std::optional<int>& column
+  )
+  {
+    return std::make_shared<value::function>(
+      parameters,
+      expression,
+      name,
+      line,
+      column
+    );
   }
 
   std::ostream&

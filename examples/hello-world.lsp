@@ -1,6 +1,6 @@
 #!/usr/bin/env bali
 
-(let x 3)
+(setq x 3)
 
 (write
   (append

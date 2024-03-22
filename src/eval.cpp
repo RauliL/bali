@@ -35,7 +35,11 @@ namespace bali
       const auto end = std::end(elements);
       const auto id = to_atom(*begin++, scope);
 
-      if (const auto function = find_builtin_function(id))
+      if (const auto function = find_custom_function(id))
+      {
+        return function->call(begin, end, scope);
+      }
+      else if (const auto function = find_builtin_function(id))
       {
         return (*function)(begin, end, scope);
       }
@@ -68,6 +72,9 @@ namespace bali
 
       case value::type::list:
         return eval_list(std::static_pointer_cast<value::list>(value), scope);
+
+      case value::type::function:
+        break;
     }
 
     return value;

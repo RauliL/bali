@@ -13,4 +13,12 @@ namespace bali
   std::optional<builtin_function_callback_type> find_builtin_function(
     const std::string& name
   );
+  std::shared_ptr<value::function> find_custom_function(
+    const std::string& name
+  );
+  std::shared_ptr<value::function> define_custom_function(
+    const std::string& name,
+    const std::vector<std::string>& parameters,
+    const value::ptr& expression
+  );
 }

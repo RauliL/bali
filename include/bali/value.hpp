@@ -15,10 +15,12 @@ namespace bali
     enum class type
     {
       atom,
+      function,
       list,
     };
 
     class atom;
+    class function;
     class list;
 
     explicit value(
@@ -97,6 +99,39 @@ namespace bali
     const container_type m_elements;
   };
 
+  class value::function final : public value
+  {
+  public:
+    explicit function(
+      const std::vector<std::string>& parameters,
+      const ptr& expression,
+      const std::optional<std::string>& name,
+      const std::optional<int>& line = std::nullopt,
+      const std::optional<int>& column = std::nullopt
+    );
+
+    inline enum type type() const
+    {
+      return type::function;
+    }
+
+    inline const std::optional<std::string>& name() const
+    {
+      return m_name;
+    }
+
+    value::ptr call(
+      value::list::iterator& begin,
+      const value::list::iterator& end,
+      const std::shared_ptr<class scope>& scope
+    ) const;
+
+  private:
+    const std::vector<std::string> m_parameters;
+    const ptr m_expression;
+    const std::optional<std::string> m_name;
+  };
+
   std::string to_atom(
     const value::ptr& value,
     const std::shared_ptr<class scope>& scope
@@ -132,6 +167,13 @@ namespace bali
   );
   std::shared_ptr<value::list> make_list(
     const value::list::container_type& elements,
+    const std::optional<int>& line = std::nullopt,
+    const std::optional<int>& column = std::nullopt
+  );
+  std::shared_ptr<value::function> make_function(
+    const std::vector<std::string>& parameters,
+    const value::ptr& expression,
+    const std::optional<std::string>& name = std::nullopt,
     const std::optional<int>& line = std::nullopt,
     const std::optional<int>& column = std::nullopt
   );
