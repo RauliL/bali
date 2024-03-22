@@ -77,7 +77,14 @@ namespace bali
       throw error(get_function_name(m_name) + ": Too many arguments.");
     }
 
-    return eval(m_expression, function_scope);
+    try
+    {
+      return eval(m_expression, function_scope);
+    }
+    catch (function_return& e)
+    {
+      return e.value();
+    }
   }
 
   std::string

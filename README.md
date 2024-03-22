@@ -49,7 +49,7 @@ Boolean: `not`, `and`, `or`, `if`.
 
 Variables: `setq`, `let`.
 
-Functions: `apply`, `defun`, `lambda`.
+Functions: `apply`, `defun`, `lambda`, `return`.
 
 Utilities: `quote`, `load`, `write`.
 

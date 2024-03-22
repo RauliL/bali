@@ -55,6 +55,10 @@ repl(const std::shared_ptr<bali::scope>& scope)
       {
         std::cout << e << std::endl;
       }
+      catch (bali::function_return&)
+      {
+        std::cout << "Unexpected `return'." << std::endl;
+      }
       script.clear();
     }
   }
@@ -82,6 +86,11 @@ run_file(
   catch (bali::error& e)
   {
     std::cerr << e << std::endl;
+    std::exit(EXIT_FAILURE);
+  }
+  catch (bali::function_return&)
+  {
+    std::cerr << "Unexpected `return'." << std::endl;
     std::exit(EXIT_FAILURE);
   }
 }

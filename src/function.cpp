@@ -542,6 +542,24 @@ namespace bali
   }
 
   static value::ptr
+  function_return_(
+    value::list::iterator& it,
+    const value::list::iterator& end,
+    const std::shared_ptr<scope>& scope
+  )
+  {
+    value::ptr return_value;
+
+    if (it != end)
+    {
+      return_value = eval(*it++, scope);
+    }
+    finish("return", it, end);
+
+    throw function_return(return_value);
+  }
+
+  static value::ptr
   function_lambda(
     value::list::iterator& it,
     const value::list::iterator& end,
@@ -644,6 +662,7 @@ namespace bali
     { "apply", function_apply },
     { "defun", function_defun },
     { "lambda", function_lambda },
+    { "return", function_return_ },
 
     // Misc stuff.
     { "quote", function_quote },
