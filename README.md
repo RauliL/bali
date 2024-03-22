@@ -44,7 +44,11 @@ List: `length`, `cons`, `car`, `cdr`, `list`, `append`.
 
 Boolean: `not`, `and`, `or`, `if`.
 
-Utilities: `let`, `quote`, `apply`, `load`, `write`.
+Variables: `setq`, `let`.
+
+Functions: `apply`.
+
+Utilities: `quote`, `load`, `write`.
 
 [Lisp]: https://en.wikipedia.org/wiki/Lisp_(programming_language)
 [shebangs]: https://en.wikipedia.org/wiki/Shebang_(Unix)

@@ -2,8 +2,8 @@
 #include <unordered_map>
 
 #include <bali/error.hpp>
+#include <bali/eval.hpp>
 #include <bali/utils.hpp>
-#include <bali/value.hpp>
 
 #if !defined(BUFSIZ)
 #  define BUFSIZ 1024
@@ -37,10 +37,10 @@ namespace bali
   std::string
   to_atom(
     const value::ptr& value,
-    std::unordered_map<std::string, value::ptr>& scope
+    const std::shared_ptr<class scope>& scope
   )
   {
-    const auto result = eval(value, scope);
+    const auto result = scope ? eval(value, scope) : value;
 
     if (result && result->type() == value::type::atom)
     {
@@ -57,10 +57,10 @@ namespace bali
   bool
   to_bool(
     const value::ptr& value,
-    std::unordered_map<std::string, value::ptr>& scope
+    const std::shared_ptr<class scope>& scope
   )
   {
-    const auto result = eval(value, scope);
+    const auto result = scope ? eval(value, scope) : value;
 
     if (!result)
     {
@@ -79,10 +79,10 @@ namespace bali
   value::list::container_type
   to_list(
     const value::ptr& value,
-    std::unordered_map<std::string, value::ptr>& scope
+    const std::shared_ptr<class scope>& scope
   )
   {
-    const auto result = eval(value, scope);
+    const auto result = scope ? eval(value, scope) : value;
 
     if (result && result->type() == value::type::list)
     {
@@ -99,10 +99,10 @@ namespace bali
   double
   to_number(
     const value::ptr& value,
-    std::unordered_map<std::string, value::ptr>& scope
+    const std::shared_ptr<class scope>& scope
   )
   {
-    const auto result = eval(value, scope);
+    const auto result = scope ? eval(value, scope) : value;
 
     if (result && result->type() == value::type::atom)
     {
@@ -118,42 +118,49 @@ namespace bali
 
     throw error(
       "Value is not a number.",
-      value? value->line() : std::nullopt,
-      value? value->column() : std::nullopt
+      value ? value->line() : std::nullopt,
+      value ? value->column() : std::nullopt
     );
+  }
+
+  static std::string
+  list_to_string(const std::shared_ptr<value::list>& list)
+  {
+    const auto& elements = list->elements();
+    const auto size = elements.size();
+    std::string result('(', 1);
+
+    for (value::list::container_type::size_type i = 0; i < size; ++i)
+    {
+      if (i > 0)
+      {
+        result += ' ';
+      }
+      result += to_string(elements[i]);
+    }
+    result += ')';
+
+    return result;
   }
 
   std::string
   to_string(const value::ptr& value)
   {
-    if (value)
+    if (!value)
     {
-      if (value->type() == value::type::atom)
-      {
-        return std::static_pointer_cast<value::atom>(value)->symbol();
-      } else {
-        std::string result;
-        const auto elements = std::static_pointer_cast<value::list>(
-          value
-        )->elements();
-        const auto size = elements.size();
-
-        result += '(';
-        for (value::list::container_type::size_type i = 0; i < size; ++i)
-        {
-          if (i > 0)
-          {
-            result += ' ';
-          }
-          result += to_string(elements[i]);
-        }
-        result += ')';
-
-        return result;
-      }
+      return "nil";
     }
 
-    return "nil";
+    switch (value->type())
+    {
+      case value::type::atom:
+        return std::static_pointer_cast<value::atom>(value)->symbol();
+
+      case value::type::list:
+        return list_to_string(std::static_pointer_cast<value::list>(value));
+    }
+
+    return "<unknown>";
   }
 
   std::shared_ptr<value::atom>

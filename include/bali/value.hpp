@@ -3,7 +3,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace bali
@@ -98,25 +97,21 @@ namespace bali
     const container_type m_elements;
   };
 
-  value::ptr eval(
-    const value::ptr& value,
-    std::unordered_map<std::string, value::ptr>& scope
-  );
   std::string to_atom(
     const value::ptr& value,
-    std::unordered_map<std::string, value::ptr>& scope
+    const std::shared_ptr<class scope>& scope
   );
   bool to_bool(
     const value::ptr& value,
-    std::unordered_map<std::string, value::ptr>& scope
+    const std::shared_ptr<class scope>& scope
   );
   value::list::container_type to_list(
     const value::ptr& value,
-    std::unordered_map<std::string, value::ptr>& scope
+    const std::shared_ptr<class scope>& scope
   );
   double to_number(
     const value::ptr& value,
-    std::unordered_map<std::string, value::ptr>& scope
+    const std::shared_ptr<class scope>& scope
   );
   std::string to_string(const value::ptr&);
 
