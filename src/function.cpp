@@ -404,8 +404,12 @@ namespace bali
   {
     const auto condition = eat("if", it, end);
     const auto then_value = eat("if", it, end);
-    const auto else_value = eat("if", it, end);
+    value::ptr else_value;
 
+    if (it != end)
+    {
+      else_value = *it++;
+    }
     finish("if", it, end);
 
     return eval(to_bool(condition, scope) ? then_value : else_value, scope);
