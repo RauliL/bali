@@ -133,22 +133,6 @@ namespace bali
     const std::optional<std::string> m_name;
   };
 
-  std::string to_atom(
-    const value::ptr& value,
-    const std::shared_ptr<class scope>& scope
-  );
-  bool to_bool(
-    const value::ptr& value,
-    const std::shared_ptr<class scope>& scope
-  );
-  value::list::container_type to_list(
-    const value::ptr& value,
-    const std::shared_ptr<class scope>& scope
-  );
-  double to_number(
-    const value::ptr& value,
-    const std::shared_ptr<class scope>& scope
-  );
   std::string to_string(const value::ptr&);
 
   std::shared_ptr<value::atom> make_bool(

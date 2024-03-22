@@ -1,6 +1,7 @@
 #include <bali/error.hpp>
 #include <bali/eval.hpp>
 #include <bali/function.hpp>
+#include <bali/utils.hpp>
 
 namespace bali
 {
@@ -78,5 +79,94 @@ namespace bali
     }
 
     return value;
+  }
+
+  const std::string&
+  to_atom(
+    const value::ptr& value,
+    const std::shared_ptr<class scope>& scope
+  )
+  {
+    const auto result = scope ? eval(value, scope) : value;
+
+    if (result && result->type() == value::type::atom)
+    {
+      return std::static_pointer_cast<value::atom>(result)->symbol();
+    }
+
+    throw error(
+      "Value is not an atom.",
+      value ? value->line() : std::nullopt,
+      value ? value->column() : std::nullopt
+    );
+  }
+
+  bool
+  to_bool(
+    const value::ptr& value,
+    const std::shared_ptr<class scope>& scope
+  )
+  {
+    const auto result = scope ? eval(value, scope) : value;
+
+    if (!result)
+    {
+      return false;
+    }
+    else if (result->type() == value::type::atom)
+    {
+      return std::static_pointer_cast<value::atom>(
+        result
+      )->symbol().compare("nil") != 0;
+    }
+
+    return true;
+  }
+
+  const value::list::container_type&
+  to_list(
+    const value::ptr& value,
+    const std::shared_ptr<class scope>& scope
+  )
+  {
+    const auto result = scope ? eval(value, scope) : value;
+
+    if (result && result->type() == value::type::list)
+    {
+      return std::static_pointer_cast<value::list>(result)->elements();
+    }
+
+    throw error(
+      "Value is not a list.",
+      value ? value->line() : std::nullopt,
+      value ? value->column() : std::nullopt
+    );
+  }
+
+  double
+  to_number(
+    const value::ptr& value,
+    const std::shared_ptr<class scope>& scope
+  )
+  {
+    const auto result = scope ? eval(value, scope) : value;
+
+    if (result && result->type() == value::type::atom)
+    {
+      const auto& symbol = std::static_pointer_cast<value::atom>(
+        result
+      )->symbol();
+
+      if (utils::is_number(symbol))
+      {
+        return std::stod(symbol);
+      }
+    }
+
+    throw error(
+      "Value is not a number.",
+      value ? value->line() : std::nullopt,
+      value ? value->column() : std::nullopt
+    );
   }
 }
