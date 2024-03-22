@@ -5,6 +5,8 @@
 
 namespace bali
 {
+  static const char comment_character = ';';
+
   parser::parser(const std::string& input, int line)
     : m_pos(std::begin(input))
     , m_end(std::end(input))
@@ -15,6 +17,19 @@ namespace bali
   parser::parse()
   {
     value::list::container_type values;
+
+    // Skip shebang.
+    if (m_pos + 1 != m_end && *m_pos == '#' && *(m_pos + 1) == '!')
+    {
+      for (;;)
+      {
+        if (eof() || peek_read('\n'))
+        {
+          break;
+        }
+        ++m_pos;
+      }
+    }
 
     for (;;)
     {
@@ -39,7 +54,7 @@ namespace bali
     while (!eof())
     {
       // Skip line comments.
-      if (peek_read('#'))
+      if (peek_read(comment_character))
       {
         while (!eof())
         {
@@ -146,7 +161,7 @@ namespace bali
       while (
         !eof() &&
         !std::isspace(*m_pos) &&
-        *m_pos != '#' &&
+        *m_pos != comment_character &&
         *m_pos != '(' &&
         *m_pos != ')' &&
         *m_pos != '\''
