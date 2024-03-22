@@ -34,7 +34,13 @@ repl(const std::shared_ptr<bali::scope>& scope)
   int line_counter = 0;
   int parenthesis_counter = 0;
 
-  while (const auto line = prompt.input("> "))
+  while (const auto line = prompt.input(
+    "bali:" +
+    std::to_string(line_counter) +
+    ":" +
+    std::to_string(parenthesis_counter) +
+    "> ")
+  )
   {
     script += *line;
     ++line_counter;
