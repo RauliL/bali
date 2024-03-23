@@ -645,7 +645,7 @@ namespace bali
       );
 
       file.close();
-      for (const auto& value : parser(source).parse())
+      for (const auto& value : parse(source))
       {
         eval(value, scope);
       }

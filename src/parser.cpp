@@ -2,191 +2,117 @@
 
 #include <bali/error.hpp>
 #include <bali/parser.hpp>
+#include <bali/utils.hpp>
 
 namespace bali
 {
   static const char comment_character = ';';
 
-  parser::parser(const std::string& input, int line)
-    : m_pos(std::begin(input))
-    , m_end(std::end(input))
-    , m_line(line)
-    , m_column(1) {}
-
-  value::list::container_type
-  parser::parse()
+  static inline bool
+  eof(
+    std::string::const_iterator& pos,
+    const std::string::const_iterator& end
+  )
   {
-    value::list::container_type values;
-
-    // Skip shebang.
-    if (m_pos + 1 != m_end && *m_pos == '#' && *(m_pos + 1) == '!')
-    {
-      for (;;)
-      {
-        if (eof() || peek_read('\n'))
-        {
-          break;
-        }
-        read();
-      }
-    }
-
-    for (;;)
-    {
-      skip_whitespace();
-      if (eof())
-      {
-        return values;
-      }
-      values.push_back(parse_value());
-    }
+    return pos >= end;
   }
 
-  bool
-  parser::eof() const
+  static inline char
+  read(
+    std::string::const_iterator& pos,
+    int& line,
+    int& column
+  )
   {
-    return m_pos >= m_end;
+    const auto result = *pos++;
+
+    if (result == '\n')
+    {
+      ++line;
+      column = 1;
+    } else {
+      ++column;
+    }
+
+    return result;
   }
 
-  void
-  parser::skip_whitespace()
+  static inline bool
+  peek_read(
+    char input,
+    std::string::const_iterator& pos,
+    const std::string::const_iterator& end,
+    int& line,
+    int& column
+  )
   {
-    while (!eof())
+    if (!eof(pos, end) && *pos == input)
+    {
+      read(pos, line, column);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  static void
+  skip_whitespace(
+    std::string::const_iterator& pos,
+    const std::string::const_iterator& end,
+    int& line,
+    int& column
+  )
+  {
+    while (!eof(pos, end))
     {
       // Skip line comments.
-      if (peek_read(comment_character))
+      if (peek_read(comment_character, pos, end, line, column))
       {
-        while (!eof())
+        while (!eof(pos, end))
         {
-          if (peek_read('\n') || peek_read('\r'))
+          if (
+            peek_read('\n', pos, end, line, column) ||
+            peek_read('\r', pos, end, line, column)
+          )
           {
             break;
           } else {
-            read();
+            read(pos, line, column);
           }
         }
       }
-      else if (std::isspace(*m_pos))
+      else if (std::isspace(*pos))
       {
-        read();
+        read(pos, line, column);
       } else {
         return;
       }
     }
   }
 
-  value::ptr
-  parser::parse_value()
+  static void
+  parse_escape_sequence(
+    std::string& buffer,
+    std::string::const_iterator& pos,
+    const std::string::const_iterator& end,
+    int& line,
+    int& column
+  )
   {
-    int line;
-    int column;
+    const int sequence_line = line;
+    const int sequence_column = column;
 
-    skip_whitespace();
-
-    line = m_line;
-    column = m_column;
-
-    if (eof())
-    {
-      throw error("Unexpected end of input, missing token.", line, column);
-    }
-
-    if (peek_read('('))
-    {
-      value::list::container_type elements;
-
-      for (;;)
-      {
-        skip_whitespace();
-
-        if (eof())
-        {
-          throw error("Unterminated list: Missing `)'.", line, column);
-        }
-        else if (peek_read(')'))
-        {
-          break;
-        }
-        elements.push_back(parse_value());
-      }
-
-      return value::list::make(elements, line, column);
-    }
-    else if (peek_read('\''))
-    {
-      return value::list::make(
-        {
-          value::atom::make("quote", line, column),
-          parse_value()
-        },
-        line,
-        column
-      );
-    }
-    else if (peek_read('"'))
-    {
-      std::string buffer;
-
-      for (;;)
-      {
-        if (eof())
-        {
-          throw error("Unterminated string: Missing `\"'.", line, column);
-        }
-        else if (peek_read('"'))
-        {
-          break;
-        }
-        else if (peek_read('\\'))
-        {
-          parse_escape_sequence(buffer);
-        } else {
-          buffer += read();
-        }
-      }
-
-      return value::atom::make(buffer, line, column);
-    } else {
-      std::string buffer;
-
-      do
-      {
-        if (peek_read('\\'))
-        {
-          parse_escape_sequence(buffer);
-        } else {
-          buffer += read();
-        }
-      }
-      while (
-        !eof() &&
-        !std::isspace(*m_pos) &&
-        *m_pos != comment_character &&
-        *m_pos != '(' &&
-        *m_pos != ')' &&
-        *m_pos != '\''
-      );
-
-      return value::atom::make(buffer, line, column);
-    }
-  }
-
-  void
-  parser::parse_escape_sequence(std::string& buffer)
-  {
-    const int line = m_line;
-    const int column = m_column;
-
-    if (eof())
+    if (eof(pos, end))
     {
       throw error(
         "Unexpected end of input; Missing escape sequence.",
-        line,
-        column
+        sequence_line,
+        sequence_column
       );
     }
 
-    switch (read())
+    switch (read(pos, line, column))
     {
     case 'b':
       buffer.append(1, 010);
@@ -212,7 +138,7 @@ namespace bali
     case '\'':
     case '\\':
     case '/':
-      buffer.append(1, *(m_pos - 1));
+      buffer.append(1, *(pos - 1));
       break;
 
     case 'u':
@@ -221,32 +147,32 @@ namespace bali
 
         for (int i = 0; i < 4; ++i)
         {
-          if (eof())
+          if (eof(pos, end))
           {
             throw error(
               "Unterminated escape sequence.",
-              line,
-              column
+              sequence_line,
+              sequence_column
             );
           }
-          else if (!std::isxdigit(*m_pos))
+          else if (!std::isxdigit(*pos))
           {
             throw error(
               "Illegal Unicode hex escape sequence.",
-              line,
-              column
+              sequence_line,
+              sequence_column
             );
           }
 
-          if (*m_pos >= 'A' && *m_pos <= 'F')
+          if (*pos >= 'A' && *pos <= 'F')
           {
-            result = result * 16 + (read() - 'A' + 10);
+            result = result * 16 + (read(pos, line, column) - 'A' + 10);
           }
-          else if (*m_pos >= 'a' && *m_pos <= 'f')
+          else if (*pos >= 'a' && *pos <= 'f')
           {
-            result = result * 16 + (read() - 'a' + 10);
+            result = result * 16 + (read(pos, line, column) - 'a' + 10);
           } else {
-            result = result * 16 + (read() - '0');
+            result = result * 16 + (read(pos, line, column) - '0');
           }
         }
 
@@ -254,8 +180,8 @@ namespace bali
         {
           throw error(
             "Illegal Unicode hex escape sequence.",
-            line,
-            column
+            sequence_line,
+            sequence_column
           );
         }
 
@@ -272,32 +198,148 @@ namespace bali
     }
   }
 
-  char
-  parser::read()
+  static value::ptr
+  parse_value(
+    std::string::const_iterator& pos,
+    const std::string::const_iterator& end,
+    int& line,
+    int& column
+  )
   {
-    const auto result = *m_pos++;
+    int value_line;
+    int value_column;
 
-    if (result == '\n')
+    skip_whitespace(pos, end, line, column);
+
+    value_line = line;
+    value_column = column;
+
+    if (eof(pos, end))
     {
-      ++m_line;
-      m_column = 1;
-    } else {
-      ++m_column;
+      throw error(
+        "Unexpected end of input, missing token.",
+        value_line,
+        value_column
+      );
     }
 
-    return result;
+    if (peek_read('(', pos, end, line, column))
+    {
+      value::list::container_type elements;
+
+      for (;;)
+      {
+        skip_whitespace(pos, end, line, column);
+
+        if (eof(pos, end))
+        {
+          throw error(
+            "Unterminated list: Missing `)'.",
+            value_line,
+            value_column
+          );
+        }
+        else if (peek_read(')', pos, end, line, column))
+        {
+          break;
+        }
+        elements.push_back(parse_value(pos, end, line, column));
+      }
+
+      return value::list::make(elements, value_line, value_column);
+    }
+    else if (peek_read('\'', pos, end, line, column))
+    {
+      return value::list::make(
+        {
+          value::atom::make("quote", value_line, value_column),
+          parse_value(pos, end, line, column)
+        },
+        value_line,
+        value_column
+      );
+    }
+    else if (peek_read('"', pos, end, line, column))
+    {
+      std::string buffer;
+
+      for (;;)
+      {
+        if (eof(pos, end))
+        {
+          throw error(
+            "Unterminated string: Missing `\"'.",
+            value_line,
+            value_column
+          );
+        }
+        else if (peek_read('"', pos, end, line, column))
+        {
+          break;
+        }
+        else if (peek_read('\\', pos, end, line, column))
+        {
+          parse_escape_sequence(buffer, pos, end, line, column);
+        } else {
+          buffer += read(pos, line, column);
+        }
+      }
+
+      return value::atom::make(buffer, value_line, value_column);
+    } else {
+      std::string buffer;
+
+      do
+      {
+        if (peek_read('\\', pos, end, line, column))
+        {
+          parse_escape_sequence(buffer, pos, end, line, column);
+        } else {
+          buffer += read(pos, line, column);
+        }
+      }
+      while (
+        !eof(pos, end) &&
+        !std::isspace(*pos) &&
+        *pos != comment_character &&
+        *pos != '(' &&
+        *pos != ')' &&
+        *pos != '\''
+      );
+
+      return value::atom::make(buffer, value_line, value_column);
+    }
   }
 
-  bool
-  parser::peek_read(char input)
+  value::list::container_type
+  parse(const std::string& input, int line)
   {
-    if (!eof() && *m_pos == input)
-    {
-      read();
+    auto pos = std::begin(input);
+    const auto end = std::end(input);
+    int column = 1;
+    value::list::container_type values;
 
-      return true;
+    // Skip shebang.
+    if (pos + 1 != end && *pos == '#' && *(pos + 1) == '!')
+    {
+      for (;;)
+      {
+        if (eof(pos, end) || peek_read('\n', pos, end, line, column))
+        {
+          break;
+        }
+        read(pos, line, column);
+      }
     }
 
-    return false;
+    for (;;)
+    {
+      skip_whitespace(pos, end, line, column);
+      if (eof(pos, end))
+      {
+        return values;
+      }
+      values.push_back(parse_value(pos, end, line, column));
+    }
   }
 }

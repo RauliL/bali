@@ -48,11 +48,9 @@ repl(const std::shared_ptr<bali::scope>& scope)
     count_open_parenthesis(*line, parenthesis_counter);
     if (parenthesis_counter == 0)
     {
-      bali::parser parser(script, line_counter);
-
       try
       {
-        for (const auto& value : parser.parse())
+        for (const auto& value : bali::parse(script, line_counter))
         {
           std::cout << bali::eval(value, scope) << std::endl;
         }
@@ -80,11 +78,10 @@ run_file(
     std::istreambuf_iterator<char>(file),
     std::istreambuf_iterator<char>()
   );
-  bali::parser parser(source);
 
   try
   {
-    for (const auto& value : parser.parse())
+    for (const auto& value : bali::parse(source))
     {
       bali::eval(value, scope);
     }
