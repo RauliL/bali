@@ -17,7 +17,6 @@ namespace bali
     scope& operator=(const scope&) = default;
     scope& operator=(scope&&) = default;
 
-    bool has(const std::string& name) const;
     bool get(const std::string& name, value::ptr& slot) const;
     void let(const std::string& name, const value::ptr& value);
     void set(const std::string& name, const value::ptr& value);

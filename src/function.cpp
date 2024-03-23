@@ -355,6 +355,50 @@ namespace bali
   }
 
   static value::ptr
+  function_filter(
+    value::list::iterator& it,
+    const value::list::iterator& end,
+    const std::shared_ptr<class scope>& scope
+  )
+  {
+    const auto list = to_list(eat("filter", it, end), scope);
+    const auto callback = to_function(eat("filter", it, end), scope);
+    value::list::container_type result;
+
+    finish("filter", it, end);
+    for (const auto& element : list)
+    {
+      if (to_bool(callback->call({ element }, scope), nullptr))
+      {
+        result.push_back(element);
+      }
+    }
+
+    return value::list::make(result);
+  }
+
+  static value::ptr
+  function_map(
+    value::list::iterator& it,
+    const value::list::iterator& end,
+    const std::shared_ptr<class scope>& scope
+  )
+  {
+    const auto list = to_list(eat("map", it, end), scope);
+    const auto callback = to_function(eat("map", it, end), scope);
+    value::list::container_type result;
+
+    finish("filter", it, end);
+    result.reserve(list.size());
+    for (const auto& element : list)
+    {
+      result.push_back(callback->call({ element }, scope));
+    }
+
+    return value::list::make(result);
+  }
+
+  static value::ptr
   function_not(
     value::list::iterator& it,
     const value::list::iterator& end,
@@ -649,6 +693,8 @@ namespace bali
     { "cdr", function_cdr },
     { "list", function_list },
     { "append", function_append },
+    { "filter", function_filter },
+    { "map", function_map },
 
     // Conditions.
     { "not", function_not },

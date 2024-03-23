@@ -6,17 +6,6 @@ namespace bali
     : m_parent(parent) {}
 
   bool
-  scope::has(const std::string& name) const
-  {
-    if (m_variables.find(name) != std::end(m_variables))
-    {
-      return true;
-    }
-
-    return m_parent && m_parent->has(name);
-  }
-
-  bool
   scope::get(const std::string& name, value::ptr& slot) const
   {
     const auto it = m_variables.find(name);
@@ -44,11 +33,17 @@ namespace bali
   void
   scope::set(const std::string& name, const value::ptr& value)
   {
-    if (m_parent && m_parent->has(name))
+    auto parent = m_parent;
+
+    while (parent)
     {
-      m_parent->set(name, value);
-    } else {
-      m_variables[name] = value;
+      if (parent->m_variables.find(name) != std::end(parent->m_variables))
+      {
+        parent->m_variables[name] = value;
+        return;
+      }
+      parent = parent->m_parent;
     }
+    m_variables[name] = value;
   }
 }

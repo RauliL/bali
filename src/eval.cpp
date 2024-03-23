@@ -118,6 +118,26 @@ namespace bali
     return true;
   }
 
+  std::shared_ptr<value::function>
+  to_function(
+    const value::ptr& value,
+    const std::shared_ptr<class scope>& scope
+  )
+  {
+    const auto result = scope ? eval(value, scope) : value;
+
+    if (result && result->type() == value::type::function)
+    {
+      return std::static_pointer_cast<value::function>(result);
+    }
+
+    throw error(
+      "Value is not a function.",
+      value ? value->line() : std::nullopt,
+      value ? value->column() : std::nullopt
+    );
+  }
+
   const value::list::container_type&
   to_list(
     const value::ptr& value,
