@@ -33,17 +33,21 @@ namespace bali
   void
   scope::set(const std::string& name, const value::ptr& value)
   {
-    auto parent = m_parent;
+    if (m_variables.find(name) != std::end(m_variables))
+    {
+      m_variables[name] = value;
+      return;
+    }
 
-    while (parent)
+    for (auto parent = m_parent; parent; parent = parent->m_parent)
     {
       if (parent->m_variables.find(name) != std::end(parent->m_variables))
       {
         parent->m_variables[name] = value;
         return;
       }
-      parent = parent->m_parent;
     }
+
     m_variables[name] = value;
   }
 }
