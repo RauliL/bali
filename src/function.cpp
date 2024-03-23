@@ -509,24 +509,17 @@ namespace bali
     if (argument && argument->type() == value::type::function)
     {
       return std::static_pointer_cast<value::function>(argument)->call(
-        begin,
-        std::end(args),
+        args,
         scope
       );
-    } else {
-      const auto id = to_atom(argument, nullptr);
-
-      if (const auto function = find_custom_function(id))
-      {
-        return function->call(begin, std::end(args), scope);
-      }
-      else if (const auto function = find_builtin_function(id))
-      {
-        return (*function)(begin, std::end(args), scope);
-      }
-
-      throw error("apply: unrecognized function: `" + id + "'");
     }
+
+    return call_function(
+      to_atom(argument, nullptr),
+      begin,
+      std::end(args),
+      scope
+    );
   }
 
   static value::ptr
@@ -679,32 +672,45 @@ namespace bali
     { "write", function_write },
   };
 
-  std::optional<builtin_function_callback_type>
-  find_builtin_function(const std::string& name)
-  {
-    const auto it = builtin_function_map.find(name);
-
-    if (it != std::end(builtin_function_map))
-    {
-      return it->second;
-    }
-
-    return std::nullopt;
-  }
-
   static custom_function_map_type custom_function_map;
 
-  std::shared_ptr<value::function>
-  find_custom_function(const std::string& name)
+  std::shared_ptr<value>
+  call_function(
+    const std::string& name,
+    value::list::iterator& begin,
+    const value::list::iterator& end,
+    const std::shared_ptr<class scope>& scope,
+    const std::optional<int>& line,
+    const std::optional<int>& column
+  )
   {
-    const auto it = custom_function_map.find(name);
-
-    if (it != std::end(custom_function_map))
     {
-      return it->second;
+      const auto it = custom_function_map.find(name);
+
+      if (it != std::end(custom_function_map))
+      {
+        value::list::container_type arguments;
+
+        arguments.reserve(end - begin);
+        while (begin != end)
+        {
+          arguments.push_back(eval(*begin++, scope));
+        }
+
+        return it->second->call(arguments, scope);
+      }
     }
 
-    return nullptr;
+    {
+      const auto it = builtin_function_map.find(name);
+
+      if (it != std::end(builtin_function_map))
+      {
+        return (*it->second)(begin, end, scope);
+      }
+    }
+
+    throw error("Unrecognized function: `" + name + "'", line, column);
   }
 
   std::shared_ptr<value::function>

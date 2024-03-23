@@ -29,24 +29,19 @@ namespace bali
   )
   {
     const auto& elements = list->elements();
+    const auto size = elements.size();
 
-    if (elements.size() > 0)
+    if (size > 0)
     {
-      auto begin = std::begin(elements);
+      const auto id = to_atom(elements[0], scope);
+      auto begin = std::begin(elements) + 1;
       const auto end = std::end(elements);
-      const auto id = to_atom(*begin++, scope);
 
-      if (const auto function = find_custom_function(id))
-      {
-        return function->call(begin, end, scope);
-      }
-      else if (const auto function = find_builtin_function(id))
-      {
-        return (*function)(begin, end, scope);
-      }
-
-      throw error(
-        "Unrecognized function: `" + id + "'",
+      return call_function(
+        id,
+        begin,
+        end,
+        scope,
         list->line(),
         list->column()
       );

@@ -122,6 +122,7 @@ namespace bali
   public:
     using value_type = ptr;
     using container_type = std::vector<value_type>;
+    using size_type = container_type::size_type;
     using iterator = container_type::const_iterator;
 
     static inline std::shared_ptr<list> make(
@@ -189,8 +190,7 @@ namespace bali
     }
 
     value::ptr call(
-      value::list::iterator& begin,
-      const value::list::iterator& end,
+      const value::list::container_type& arguments,
       const std::shared_ptr<class scope>& scope
     ) const;
 

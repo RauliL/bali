@@ -1,6 +1,6 @@
 #pragma once
 
-#include <bali/value.hpp>
+#include <bali/scope.hpp>
 
 namespace bali
 {
@@ -10,12 +10,15 @@ namespace bali
     const std::shared_ptr<class scope>&
   );
 
-  std::optional<builtin_function_callback_type> find_builtin_function(
-    const std::string& name
+  std::shared_ptr<value> call_function(
+    const std::string& name,
+    value::list::iterator& begin,
+    const value::list::iterator& end,
+    const std::shared_ptr<class scope>& scope,
+    const std::optional<int>& line = std::nullopt,
+    const std::optional<int>& column = std::nullopt
   );
-  std::shared_ptr<value::function> find_custom_function(
-    const std::string& name
-  );
+
   std::shared_ptr<value::function> define_custom_function(
     const std::string& name,
     const std::vector<std::string>& parameters,

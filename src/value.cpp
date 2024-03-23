@@ -87,27 +87,27 @@ namespace bali
 
   value::ptr
   value::function::call(
-    value::list::iterator& begin,
-    const value::list::iterator& end,
+    const value::list::container_type& arguments,
     const std::shared_ptr<class scope>& scope
   ) const
   {
-    auto function_scope =
+    const auto size = arguments.size();
+    const auto function_scope =
       m_parameters.empty()
         ? scope
         : std::make_shared<class scope>(scope);
 
-    for (const auto& parameter : m_parameters)
+    if (size < m_parameters.size())
     {
-      if (begin >= end)
-      {
-        throw error(get_function_name(m_name) + ": Not enough arguments.");
-      }
-      function_scope->let(parameter, *begin++);
+      throw error(get_function_name(m_name) + ": Not enough arguments.");
     }
-    if (begin != end)
+    else if (size > m_parameters.size())
     {
       throw error(get_function_name(m_name) + ": Too many arguments.");
+    }
+    for (value::list::size_type i = 0; i < size; ++i)
+    {
+      function_scope->let(m_parameters[i], arguments[i]);
     }
 
     try
