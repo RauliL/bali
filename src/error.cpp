@@ -1,9 +1,11 @@
+#include <peelo/unicode/encoding/utf8.hpp>
+
 #include <bali/error.hpp>
 
 namespace bali
 {
   error::error(
-    const std::string& message,
+    const std::u32string& message,
     std::optional<int> line,
     std::optional<int> column
   )
@@ -23,7 +25,7 @@ namespace bali
       }
       os << ' ';
     }
-    os << e.message();
+    os << peelo::unicode::encoding::utf8::encode(e.message());
 
     return os;
   }

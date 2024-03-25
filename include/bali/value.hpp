@@ -24,9 +24,9 @@ namespace bali
     class function;
     class list;
 
-    static inline std::string to_string(const ptr& value)
+    static inline std::u32string to_string(const ptr& value)
     {
-      return value ? value->to_string() : "nil";
+      return value ? value->to_string() : U"nil";
     }
 
     explicit value(
@@ -51,7 +51,7 @@ namespace bali
     }
 
   protected:
-    virtual std::string to_string() const = 0;
+    virtual std::u32string to_string() const = 0;
 
   private:
     const std::optional<int> m_line;
@@ -61,7 +61,7 @@ namespace bali
   class value::atom final : public value
   {
   public:
-    using value_type = std::string;
+    using value_type = std::u32string;
     using const_reference = const value_type&;
 
     static inline std::shared_ptr<atom> make(
@@ -80,7 +80,7 @@ namespace bali
     )
     {
       return value
-        ? std::shared_ptr<atom>(new atom("true", line, column))
+        ? std::shared_ptr<atom>(new atom(U"true", line, column))
         : nullptr;
     }
 
@@ -101,7 +101,7 @@ namespace bali
     }
 
   protected:
-    inline std::string to_string() const
+    inline std::u32string to_string() const
     {
       return m_symbol;
     }
@@ -145,7 +145,7 @@ namespace bali
     }
 
   protected:
-    std::string to_string() const;
+    std::u32string to_string() const;
 
   private:
     explicit list(
@@ -163,9 +163,9 @@ namespace bali
   public:
     static inline std::shared_ptr<function>
     make(
-      const std::vector<std::string>& parameters,
+      const std::vector<std::u32string>& parameters,
       const ptr& expression,
-      const std::optional<std::string>& name = std::nullopt,
+      const std::optional<std::u32string>& name = std::nullopt,
       const std::optional<int>& line = std::nullopt,
       const std::optional<int>& column = std::nullopt
     )
@@ -184,7 +184,7 @@ namespace bali
       return type::function;
     }
 
-    inline const std::optional<std::string>& name() const
+    inline const std::optional<std::u32string>& name() const
     {
       return m_name;
     }
@@ -195,21 +195,21 @@ namespace bali
     ) const;
 
   protected:
-    std::string to_string() const;
+    std::u32string to_string() const;
 
   private:
     explicit function(
-      const std::vector<std::string>& parameters,
+      const std::vector<std::u32string>& parameters,
       const ptr& expression,
-      const std::optional<std::string>& name,
+      const std::optional<std::u32string>& name,
       const std::optional<int>& line = std::nullopt,
       const std::optional<int>& column = std::nullopt
     );
 
   private:
-    const std::vector<std::string> m_parameters;
+    const std::vector<std::u32string> m_parameters;
     const ptr m_expression;
-    const std::optional<std::string> m_name;
+    const std::optional<std::u32string> m_name;
   };
 
   std::ostream& operator<<(std::ostream& os, const value::ptr& value);
