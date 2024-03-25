@@ -108,14 +108,22 @@ namespace bali
     {
       return false;
     }
-    else if (result->type() == value::type::atom)
-    {
-      return std::static_pointer_cast<value::atom>(
-        result
-      )->symbol().compare("nil") != 0;
-    }
 
-    return true;
+    switch (result->type())
+    {
+      case value::type::atom:
+        return std::static_pointer_cast<value::atom>(
+          result
+        )->symbol().compare("nil") != 0;
+
+      case value::type::list:
+        return std::static_pointer_cast<value::list>(
+          result
+        )->elements().size() > 0;
+
+      default:
+        return true;
+    }
   }
 
   std::shared_ptr<value::function>
