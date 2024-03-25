@@ -11,7 +11,7 @@ namespace bali
   );
 
   std::shared_ptr<value> call_function(
-    const std::string& name,
+    const std::u32string& name,
     value::list::iterator& begin,
     const value::list::iterator& end,
     const std::shared_ptr<class scope>& scope,
@@ -20,8 +20,8 @@ namespace bali
   );
 
   std::shared_ptr<value::function> define_custom_function(
-    const std::string& name,
-    const std::vector<std::string>& parameters,
+    const std::u32string& name,
+    const std::vector<std::u32string>& parameters,
     const value::ptr& expression
   );
 }

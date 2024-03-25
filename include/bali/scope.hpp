@@ -9,7 +9,7 @@ namespace bali
   class scope
   {
   public:
-    using container_type = std::unordered_map<std::string, value::ptr>;
+    using container_type = std::unordered_map<std::u32string, value::ptr>;
 
     explicit scope(const std::shared_ptr<scope>& parent = nullptr);
     scope(const scope&) = default;
@@ -17,9 +17,9 @@ namespace bali
     scope& operator=(const scope&) = default;
     scope& operator=(scope&&) = default;
 
-    bool get(const std::string& name, value::ptr& slot) const;
-    void let(const std::string& name, const value::ptr& value);
-    void set(const std::string& name, const value::ptr& value);
+    bool get(const std::u32string& name, value::ptr& slot) const;
+    void let(const std::u32string& name, const value::ptr& value);
+    void set(const std::u32string& name, const value::ptr& value);
 
   private:
     std::shared_ptr<scope> m_parent;

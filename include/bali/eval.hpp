@@ -9,7 +9,7 @@ namespace bali
     const std::shared_ptr<class scope>& scope
   );
 
-  const std::string&
+  const std::u32string&
   to_atom(
     const value::ptr& value,
     const std::shared_ptr<class scope>& scope

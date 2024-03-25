@@ -1,3 +1,5 @@
+#include <peelo/unicode/encoding/utf8.hpp>
+
 #include <bali/error.hpp>
 #include <bali/eval.hpp>
 #include <bali/function.hpp>
@@ -19,7 +21,7 @@ namespace bali
       return variable;
     }
 
-    return !id.compare("nil") ? nullptr : atom;
+    return !id.compare(U"nil") ? nullptr : atom;
   }
 
   static value::ptr
@@ -76,7 +78,7 @@ namespace bali
     return value;
   }
 
-  const std::string&
+  const std::u32string&
   to_atom(
     const value::ptr& value,
     const std::shared_ptr<class scope>& scope
@@ -90,7 +92,7 @@ namespace bali
     }
 
     throw error(
-      "Value is not an atom.",
+      U"Value is not an atom.",
       value ? value->line() : std::nullopt,
       value ? value->column() : std::nullopt
     );
@@ -114,7 +116,7 @@ namespace bali
       case value::type::atom:
         return std::static_pointer_cast<value::atom>(
           result
-        )->symbol().compare("nil") != 0;
+        )->symbol().compare(U"nil") != 0;
 
       case value::type::list:
         return std::static_pointer_cast<value::list>(
@@ -140,7 +142,7 @@ namespace bali
     }
 
     throw error(
-      "Value is not a function.",
+      U"Value is not a function.",
       value ? value->line() : std::nullopt,
       value ? value->column() : std::nullopt
     );
@@ -160,7 +162,7 @@ namespace bali
     }
 
     throw error(
-      "Value is not a list.",
+      U"Value is not a list.",
       value ? value->line() : std::nullopt,
       value ? value->column() : std::nullopt
     );
@@ -182,12 +184,12 @@ namespace bali
 
       if (utils::is_number(symbol))
       {
-        return std::stod(symbol);
+        return std::stod(peelo::unicode::encoding::utf8::encode(symbol));
       }
     }
 
     throw error(
-      "Value is not a number.",
+      U"Value is not a number.",
       value ? value->line() : std::nullopt,
       value ? value->column() : std::nullopt
     );

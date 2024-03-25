@@ -10,7 +10,7 @@ namespace bali
   {
   public:
     explicit error(
-      const std::string& message,
+      const std::u32string& message,
       std::optional<int> line = std::nullopt,
       std::optional<int> column = std::nullopt
     );
@@ -19,7 +19,7 @@ namespace bali
     error& operator=(const error&) = default;
     error& operator=(error&&) = default;
 
-    inline const std::string& message() const
+    inline const std::u32string& message() const
     {
       return m_message;
     }
@@ -35,7 +35,7 @@ namespace bali
     }
 
   private:
-    std::string m_message;
+    std::u32string m_message;
     std::optional<int> m_line;
     std::optional<int> m_column;
   };

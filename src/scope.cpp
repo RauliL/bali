@@ -6,7 +6,7 @@ namespace bali
     : m_parent(parent) {}
 
   bool
-  scope::get(const std::string& name, value::ptr& slot) const
+  scope::get(const std::u32string& name, value::ptr& slot) const
   {
     const auto it = m_variables.find(name);
 
@@ -25,13 +25,13 @@ namespace bali
   }
 
   void
-  scope::let(const std::string& name, const value::ptr& value)
+  scope::let(const std::u32string& name, const value::ptr& value)
   {
     m_variables[name] = value;
   }
 
   void
-  scope::set(const std::string& name, const value::ptr& value)
+  scope::set(const std::u32string& name, const value::ptr& value)
   {
     if (m_variables.find(name) != std::end(m_variables))
     {

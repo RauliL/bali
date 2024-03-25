@@ -20,6 +20,7 @@ TARGET_INCLUDE_DIRECTORIES(
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/ext/peelo-prompt/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/ext/peelo-unicode/include
 )
 
 TARGET_COMPILE_FEATURES(

@@ -1,4 +1,7 @@
+#include <cstring>
 #include <fstream>
+
+#include <peelo/unicode/encoding/utf8.hpp>
 
 #include <bali/error.hpp>
 #include <bali/eval.hpp>
@@ -8,11 +11,11 @@
 namespace bali
 {
   using builtin_function_map_type = std::unordered_map<
-    std::string,
+    std::u32string,
     builtin_function_callback_type
   >;
   using custom_function_map_type = std::unordered_map<
-    std::string,
+    std::u32string,
     std::shared_ptr<value::function>
   >;
   using compare_callback_type = bool(*)(double, double);
@@ -29,7 +32,12 @@ namespace bali
       return *it++;
     }
 
-    throw error(std::string(function) + ": Not enough arguments.");
+    throw error(
+      peelo::unicode::encoding::utf8::decode(
+        function,
+        std::strlen(function)
+      ) + U": Not enough arguments."
+    );
   }
 
   static inline void
@@ -41,7 +49,12 @@ namespace bali
   {
     if (it != end)
     {
-      throw error(std::string(function) + ": Too many arguments.");
+      throw error(
+        peelo::unicode::encoding::utf8::decode(
+          function,
+          std::strlen(function)
+        ) + U": Too many arguments."
+      );
     }
   }
 
@@ -137,7 +150,7 @@ namespace bali
 
     if (it == end)
     {
-      throw error("/: Not enough arguments.");
+      throw error(U"/: Not enough arguments.");
     }
     do
     {
@@ -145,7 +158,7 @@ namespace bali
 
       if (divider == 0)
       {
-        throw error("/: Division by zero.");
+        throw error(U"/: Division by zero.");
       }
       result /= divider;
     }
@@ -292,7 +305,7 @@ namespace bali
       return list[0];
     }
 
-    throw error("car: Empty list.");
+    throw error(U"car: Empty list.");
   }
 
   static value::ptr
@@ -315,7 +328,7 @@ namespace bali
       );
     }
 
-    throw error("cdr: Empty list.");
+    throw error(U"cdr: Empty list.");
   }
 
   static value::ptr
@@ -506,7 +519,7 @@ namespace bali
         if (pair.size() != 2)
         {
           throw error(
-            "Malformed `let` binding.",
+            U"Malformed `let` binding.",
             entry->line(),
             entry->column()
           );
@@ -575,7 +588,7 @@ namespace bali
   {
     const auto name = to_atom(eat("defun", it, end), scope);
     const auto raw_parameters = to_list(eat("defun", it, end), nullptr);
-    std::vector<std::string> parameters;
+    std::vector<std::u32string> parameters;
     const auto expression = eat("defun", it, end);
 
     finish("defun", it, end);
@@ -614,7 +627,7 @@ namespace bali
   )
   {
     const auto raw_parameters = to_list(eat("lambda", it, end), nullptr);
-    std::vector<std::string> parameters;
+    std::vector<std::u32string> parameters;
     const auto expression = eat("lambda", it, end);
 
     finish("lambda", it, end);
@@ -635,9 +648,12 @@ namespace bali
   )
   {
     const auto filename = to_atom(eat("load", it, end), scope);
+    const auto encoded_filename = peelo::unicode::encoding::utf8::encode(
+      filename
+    );
 
     finish("load", it, end);
-    if (auto file = std::ifstream(filename))
+    if (auto file = std::ifstream(encoded_filename))
     {
       const auto source = std::string(
         std::istreambuf_iterator<char>(file),
@@ -650,7 +666,7 @@ namespace bali
         eval(value, scope);
       }
     } else {
-      throw error("Unable to open file `" + filename + "'.");
+      throw error(U"Unable to open file `" + filename + U"'.");
     }
 
     return nullptr;
@@ -674,55 +690,55 @@ namespace bali
   static const builtin_function_map_type builtin_function_map =
   {
     // Arithmetic functions.
-    { "+", function_add },
-    { "-", function_substract },
-    { "*", function_multiply },
-    { "/", function_divide },
+    { U"+", function_add },
+    { U"-", function_substract },
+    { U"*", function_multiply },
+    { U"/", function_divide },
 
     // Comparison functions.
-    { "=", function_eq },
-    { "<", function_lt },
-    { ">", function_gt },
-    { "<=", function_lte },
-    { ">=", function_gte },
+    { U"=", function_eq },
+    { U"<", function_lt },
+    { U">", function_gt },
+    { U"<=", function_lte },
+    { U">=", function_gte },
 
     // List functions.
-    { "length", function_length },
-    { "cons", function_cons },
-    { "car", function_car },
-    { "cdr", function_cdr },
-    { "list", function_list },
-    { "append", function_append },
-    { "filter", function_filter },
-    { "map", function_map },
+    { U"length", function_length },
+    { U"cons", function_cons },
+    { U"car", function_car },
+    { U"cdr", function_cdr },
+    { U"list", function_list },
+    { U"append", function_append },
+    { U"filter", function_filter },
+    { U"map", function_map },
 
     // Conditions.
-    { "not", function_not },
-    { "and", function_and },
-    { "or", function_or },
-    { "if", function_if },
+    { U"not", function_not },
+    { U"and", function_and },
+    { U"or", function_or },
+    { U"if", function_if },
 
     // Variables.
-    { "setq", function_setq },
-    { "let", function_let },
+    { U"setq", function_setq },
+    { U"let", function_let },
 
     // Functions.
-    { "apply", function_apply },
-    { "defun", function_defun },
-    { "lambda", function_lambda },
-    { "return", function_return_ },
+    { U"apply", function_apply },
+    { U"defun", function_defun },
+    { U"lambda", function_lambda },
+    { U"return", function_return_ },
 
     // Misc stuff.
-    { "quote", function_quote },
-    { "load", function_load },
-    { "write", function_write },
+    { U"quote", function_quote },
+    { U"load", function_load },
+    { U"write", function_write },
   };
 
   static custom_function_map_type custom_function_map;
 
   std::shared_ptr<value>
   call_function(
-    const std::string& name,
+    const std::u32string& name,
     value::list::iterator& begin,
     const value::list::iterator& end,
     const std::shared_ptr<class scope>& scope,
@@ -756,13 +772,13 @@ namespace bali
       }
     }
 
-    throw error("Unrecognized function: `" + name + "'", line, column);
+    throw error(U"Unrecognized function: `" + name + U"'", line, column);
   }
 
   std::shared_ptr<value::function>
   define_custom_function(
-    const std::string& name,
-    const std::vector<std::string>& parameters,
+    const std::u32string& name,
+    const std::vector<std::u32string>& parameters,
     const value::ptr& expression
   )
   {

@@ -1,12 +1,15 @@
 #include <cctype>
 
+#include <peelo/unicode/ctype/isvalid.hpp>
+#include <peelo/unicode/encoding/utf8.hpp>
+
 #include <bali/error.hpp>
 #include <bali/parser.hpp>
 #include <bali/utils.hpp>
 
 namespace bali
 {
-  static const char comment_character = ';';
+  static const char32_t comment_character = U';';
 
   static inline bool
   eof(
@@ -17,15 +20,47 @@ namespace bali
     return pos >= end;
   }
 
-  static inline char
+  static char32_t
   read(
     std::string::const_iterator& pos,
+    const std::string::const_iterator& end,
     int& line,
     int& column
   )
   {
-    const auto result = *pos++;
+    using peelo::unicode::encoding::utf8::decode_advance;
+    using peelo::unicode::encoding::utf8::sequence_length;
+    const auto size = sequence_length(*pos);
+    char32_t result;
 
+    if (size > 1)
+    {
+      char buffer[size];
+      std::size_t i = 0;
+      char32_t result;
+
+      if ((pos + (size - 1)) >= end)
+      {
+        throw error(U"Invalid UTF-8 sequence.", line, column);
+      }
+      for (std::size_t i = 0; i < size; ++i)
+      {
+        buffer[i] = *(pos + i);
+      }
+      pos += size;
+      if (!decode_advance(buffer, i, size, result))
+      {
+        throw error(U"Invalid UTF-8 sequence.", line, column);
+      }
+
+      return result;
+    }
+    else if (size < 1)
+    {
+      throw error(U"Invalid UTF-8 sequence.", line, column);
+    } else {
+      result = static_cast<char32_t>(*pos++);
+    }
     if (result == '\n')
     {
       ++line;
@@ -48,7 +83,7 @@ namespace bali
   {
     if (!eof(pos, end) && *pos == input)
     {
-      read(pos, line, column);
+      read(pos, end, line, column);
 
       return true;
     }
@@ -78,13 +113,13 @@ namespace bali
           {
             break;
           } else {
-            read(pos, line, column);
+            read(pos, end, line, column);
           }
         }
       }
       else if (std::isspace(*pos))
       {
-        read(pos, line, column);
+        read(pos, end, line, column);
       } else {
         return;
       }
@@ -93,26 +128,27 @@ namespace bali
 
   static void
   parse_escape_sequence(
-    std::string& buffer,
+    std::u32string& buffer,
     std::string::const_iterator& pos,
     const std::string::const_iterator& end,
     int& line,
     int& column
   )
   {
+    using peelo::unicode::ctype::isvalid;
     const int sequence_line = line;
     const int sequence_column = column;
 
     if (eof(pos, end))
     {
       throw error(
-        "Unexpected end of input; Missing escape sequence.",
+        U"Unexpected end of input; Missing escape sequence.",
         sequence_line,
         sequence_column
       );
     }
 
-    switch (read(pos, line, column))
+    switch (read(pos, end, line, column))
     {
     case 'b':
       buffer.append(1, 010);
@@ -150,7 +186,7 @@ namespace bali
           if (eof(pos, end))
           {
             throw error(
-              "Unterminated escape sequence.",
+              U"Unterminated escape sequence.",
               sequence_line,
               sequence_column
             );
@@ -158,7 +194,7 @@ namespace bali
           else if (!std::isxdigit(*pos))
           {
             throw error(
-              "Illegal Unicode hex escape sequence.",
+              U"Illegal Unicode hex escape sequence.",
               sequence_line,
               sequence_column
             );
@@ -166,32 +202,32 @@ namespace bali
 
           if (*pos >= 'A' && *pos <= 'F')
           {
-            result = result * 16 + (read(pos, line, column) - 'A' + 10);
+            result = result * 16 + (read(pos, end, line, column) - 'A' + 10);
           }
           else if (*pos >= 'a' && *pos <= 'f')
           {
-            result = result * 16 + (read(pos, line, column) - 'a' + 10);
+            result = result * 16 + (read(pos, end, line, column) - 'a' + 10);
           } else {
-            result = result * 16 + (read(pos, line, column) - '0');
+            result = result * 16 + (read(pos, end, line, column) - '0');
           }
         }
 
-        if (!utils::is_valid_unicode_codepoint(result))
+        if (!isvalid(result))
         {
           throw error(
-            "Illegal Unicode hex escape sequence.",
+            U"Illegal Unicode hex escape sequence.",
             sequence_line,
             sequence_column
           );
         }
 
-        utils::utf8_encode_codepoint(result, buffer);
+        buffer += result;
       }
       break;
 
     default:
       throw error(
-        "Illegal escape sequence.",
+        U"Illegal escape sequence.",
         line,
         column
       );
@@ -217,7 +253,7 @@ namespace bali
     if (eof(pos, end))
     {
       throw error(
-        "Unexpected end of input, missing token.",
+        U"Unexpected end of input, missing token.",
         value_line,
         value_column
       );
@@ -234,7 +270,7 @@ namespace bali
         if (eof(pos, end))
         {
           throw error(
-            "Unterminated list: Missing `)'.",
+            U"Unterminated list: Missing `)'.",
             value_line,
             value_column
           );
@@ -252,60 +288,57 @@ namespace bali
     {
       return value::list::make(
         {
-          value::atom::make("quote", value_line, value_column),
+          value::atom::make(U"quote", value_line, value_column),
           parse_value(pos, end, line, column)
         },
         value_line,
         value_column
       );
-    }
-    else if (peek_read('"', pos, end, line, column))
-    {
-      std::string buffer;
-
-      for (;;)
-      {
-        if (eof(pos, end))
-        {
-          throw error(
-            "Unterminated string: Missing `\"'.",
-            value_line,
-            value_column
-          );
-        }
-        else if (peek_read('"', pos, end, line, column))
-        {
-          break;
-        }
-        else if (peek_read('\\', pos, end, line, column))
-        {
-          parse_escape_sequence(buffer, pos, end, line, column);
-        } else {
-          buffer += read(pos, line, column);
-        }
-      }
-
-      return value::atom::make(buffer, value_line, value_column);
     } else {
-      std::string buffer;
+      std::u32string buffer;
 
-      do
+      if (peek_read('"', pos, end, line, column))
       {
-        if (peek_read('\\', pos, end, line, column))
+        for (;;)
         {
-          parse_escape_sequence(buffer, pos, end, line, column);
-        } else {
-          buffer += read(pos, line, column);
+          if (eof(pos, end))
+          {
+            throw error(
+              U"Unterminated string: Missing `\"'.",
+              value_line,
+              value_column
+            );
+          }
+          else if (peek_read('"', pos, end, line, column))
+          {
+            break;
+          }
+          else if (peek_read('\\', pos, end, line, column))
+          {
+            parse_escape_sequence(buffer, pos, end, line, column);
+          } else {
+            buffer += read(pos, end, line, column);
+          }
         }
+      } else {
+        do
+        {
+          if (peek_read('\\', pos, end, line, column))
+          {
+            parse_escape_sequence(buffer, pos, end, line, column);
+          } else {
+            buffer += read(pos, end, line, column);
+          }
+        }
+        while (
+          !eof(pos, end) &&
+          !std::isspace(*pos) &&
+          *pos != comment_character &&
+          *pos != '(' &&
+          *pos != ')' &&
+          *pos != '\''
+        );
       }
-      while (
-        !eof(pos, end) &&
-        !std::isspace(*pos) &&
-        *pos != comment_character &&
-        *pos != '(' &&
-        *pos != ')' &&
-        *pos != '\''
-      );
 
       return value::atom::make(buffer, value_line, value_column);
     }
@@ -328,7 +361,7 @@ namespace bali
         {
           break;
         }
-        read(pos, line, column);
+        read(pos, end, line, column);
       }
     }
 
