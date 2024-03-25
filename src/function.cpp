@@ -368,6 +368,25 @@ namespace bali
   }
 
   static value::ptr
+  function_for_each(
+    value::list::iterator& it,
+    const value::list::iterator& end,
+    const std::shared_ptr<class scope>& scope
+  )
+  {
+    const auto list = to_list(eat("for-each", it, end), scope);
+    const auto callback = to_function(eat("for-each", it, end), scope);
+
+    finish("for-each", it, end);
+    for (const auto& element : list)
+    {
+      callback->call({ element }, scope);
+    }
+
+    return nullptr;
+  }
+
+  static value::ptr
   function_filter(
     value::list::iterator& it,
     const value::list::iterator& end,
@@ -709,6 +728,7 @@ namespace bali
     { U"cdr", function_cdr },
     { U"list", function_list },
     { U"append", function_append },
+    { U"for-each", function_for_each },
     { U"filter", function_filter },
     { U"map", function_map },
 

@@ -41,7 +41,8 @@ source code, or just `bali` without a filename to start [REPL].
 
 Numeric: `+`, `-`, `*`, `/`, `=`, `<`, `>`, `<=`, `>=`.
 
-List: `length`, `cons`, `car`, `cdr`, `list`, `append`, `filter`, `map`.
+List: `length`, `cons`, `car`, `cdr`, `list`, `append`, `for-each`, `filter`,
+`map`.
 
 Boolean: `not`, `and`, `or`, `if`.
 
