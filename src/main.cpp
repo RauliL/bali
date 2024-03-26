@@ -2,13 +2,19 @@
 #include <cstdlib>
 #include <fstream>
 
-#include <unistd.h>
+#if defined(_WIN32)
+#  include <io.h>
+#else
+#  include <unistd.h>
+#endif
 
 #include <peelo/prompt.hpp>
 
 #include <bali/error.hpp>
 #include <bali/eval.hpp>
 #include <bali/parser.hpp>
+
+static std::string programfile;
 
 static void
 count_open_parenthesis(const std::string& input, int& count)
@@ -23,6 +29,10 @@ count_open_parenthesis(const std::string& input, int& count)
     {
       --count;
     }
+  }
+  if (count < 0)
+  {
+    count = 0;
   }
 }
 
@@ -81,7 +91,7 @@ run_file(
 
   try
   {
-    for (const auto& value : bali::parse(source))
+    for (const auto& value : bali::parse(source, 1))
     {
       bali::eval(value, scope);
     }
@@ -98,26 +108,115 @@ run_file(
   }
 }
 
+static void
+print_usage(std::ostream& output, const char* executable_name)
+{
+  output
+    << std::endl
+    << "Usage: "
+    << executable_name
+    << " [switches] [programfile]"
+    << std::endl
+    << "  -m                Use M-expressions."
+    << std::endl
+    << "  --version         Print the version."
+    << std::endl
+    << "  --help            Display this message."
+    << std::endl
+    << std::endl;
+}
+
+static void
+parse_args(int argc, char** argv)
+{
+  int offset = 1;
+
+  while (offset < argc)
+  {
+    auto arg = argv[offset++];
+
+    if (!*arg)
+    {
+      continue;
+    }
+    else if (*arg != '-')
+    {
+      programfile = arg;
+      break;
+    }
+    else if (!arg[1])
+    {
+      break;
+    }
+    else if (arg[1] == '-')
+    {
+      if (!std::strcmp(arg, "--help"))
+      {
+        print_usage(std::cout, argv[0]);
+        std::exit(EXIT_SUCCESS);
+      }
+      else if (!std::strcmp(arg, "--version"))
+      {
+        std::cerr << "Bali 1.0" << std::endl;
+        std::exit(EXIT_SUCCESS);
+      } else {
+        std::cerr << "Unrecognized switch: " << arg << std::endl;
+        print_usage(std::cerr, argv[0]);
+        std::exit(EXIT_FAILURE);
+      }
+    }
+    for (int i = 1; arg[i]; ++i)
+    {
+      switch (arg[i])
+      {
+        case 'h':
+          print_usage(std::cout, argv[0]);
+          std::exit(EXIT_SUCCESS);
+          break;
+
+        default:
+          std::cerr << "Unrecognized switch: `" << arg[i] << "'" << std::endl;
+          std::exit(EXIT_FAILURE);
+          break;
+      }
+    }
+  }
+
+  if (offset < argc)
+  {
+    std::cerr << "Too many arguments given." << std::endl;
+    print_usage(std::cerr, argv[0]);
+    std::exit(EXIT_FAILURE);
+  }
+}
+
+static inline bool
+is_interactive_console()
+{
+#if defined(_WIN32)
+  return _isatty(_fileno(stdin));
+#else
+  return isatty(fileno(stdin));
+#endif
+}
+
 int
 main(int argc, char** argv)
 {
   auto scope = std::make_shared<bali::scope>();
 
-  if (argc > 2)
+  parse_args(argc, argv);
+
+  if (!programfile.empty())
   {
-    std::cerr << "Usage: " << argv[0] << " [filename]" << std::endl;
-    std::exit(EXIT_FAILURE);
-  }
-  else if (argc == 2)
-  {
-    std::ifstream file(argv[1]);
+    std::ifstream file(programfile);
 
     if (!file.good())
     {
       std::cerr
         << argv[0]
         << ": Unable to open file `"
-        << argv[1]
+        << programfile
         << "'"
         << std::endl;
       std::exit(EXIT_FAILURE);
@@ -125,7 +224,7 @@ main(int argc, char** argv)
     run_file(file, scope);
     file.close();
   }
-  else if (isatty(fileno(stdin)))
+  else if (is_interactive_console())
   {
     repl(scope);
   } else {

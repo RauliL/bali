@@ -4,13 +4,19 @@ on: [push]
 
 jobs:
   build-ubuntu:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: configure
-        run: mkdir build && cd build && cmake -DCMAKE_CXX_FLAGS="-Wall -Werror" ..
-      - name: build
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.14
+      - name: Configure
+        run: mkdir build && cd build && cmake ..
+      - name: Build
         run: cmake --build build
