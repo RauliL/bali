@@ -2,7 +2,6 @@
 
 #include <bali/error.hpp>
 #include <bali/eval.hpp>
-#include <bali/function.hpp>
 #include <bali/utils.hpp>
 
 namespace bali
@@ -35,17 +34,11 @@ namespace bali
 
     if (size > 0)
     {
-      const auto id = to_atom(elements[0], scope);
-      auto begin = std::begin(elements) + 1;
-      const auto end = std::end(elements);
+      const auto function = to_function(elements[0], scope);
 
-      return call_function(
-        id,
-        begin,
-        end,
-        scope,
-        list->line(),
-        list->column()
+      return function->call(
+        value::list::container_type(std::begin(elements) + 1, std::end(elements)),
+        scope
       );
     }
 

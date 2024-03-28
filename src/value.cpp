@@ -70,16 +70,48 @@ namespace bali
   }
 
   value::function::function(
-    const std::vector<std::u32string>& parameters,
-    const value::ptr& expression,
     const std::optional<std::u32string>& name,
     const std::optional<int>& line,
     const std::optional<int>& column
   )
     : value::value(line, column)
-    , m_parameters(parameters)
-    , m_expression(expression)
     , m_name(name) {}
+
+  value::function::builtin::builtin(
+    callback_type callback,
+    const std::u32string& name
+  )
+    : value::function::function(name, std::nullopt, std::nullopt)
+    , m_callback(callback) {}
+
+  value::ptr
+  value::function::builtin::call(
+    const value::list::container_type& arguments,
+    const std::shared_ptr<class scope>& scope
+  ) const
+  {
+    auto begin = std::begin(arguments);
+    const auto end = std::end(arguments);
+
+    return m_callback(begin, end, scope);
+  }
+
+  std::u32string
+  value::function::builtin::to_string() const
+  {
+    return U"<builtin function: " + *name() + U">";
+  }
+
+  value::function::custom::custom(
+    const std::vector<std::u32string>& parameters,
+    const ptr& expression,
+    const std::optional<std::u32string>& name,
+    const std::optional<int>& line,
+    const std::optional<int>& column
+  )
+    : value::function::function(name, line, column)
+    , m_parameters(parameters)
+    , m_expression(expression) {}
 
   static inline std::u32string
   get_function_name(const std::optional<std::u32string>& name)
@@ -88,7 +120,7 @@ namespace bali
   }
 
   value::ptr
-  value::function::call(
+  value::function::custom::call(
     const value::list::container_type& arguments,
     const std::shared_ptr<class scope>& scope
   ) const
@@ -101,11 +133,11 @@ namespace bali
 
     if (size < m_parameters.size())
     {
-      throw error(get_function_name(m_name) + U": Not enough arguments.");
+      throw error(get_function_name(name()) + U": Not enough arguments.");
     }
     else if (size > m_parameters.size())
     {
-      throw error(get_function_name(m_name) + U": Too many arguments.");
+      throw error(get_function_name(name()) + U": Too many arguments.");
     }
     for (value::list::size_type i = 0; i < size; ++i)
     {
@@ -123,14 +155,14 @@ namespace bali
   }
 
   std::u32string
-  value::function::to_string() const
+  value::function::custom::to_string() const
   {
     std::u32string result(1, U'(');
     const auto parameters_size = m_parameters.size();
 
-    if (m_name)
+    if (const auto n = name())
     {
-      result += U"defun " + *m_name + U' ';
+      result += U"defun " + *n + U' ';
     } else {
       result += U"lambda ";
     }

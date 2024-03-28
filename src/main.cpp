@@ -213,7 +213,7 @@ is_interactive_console()
 int
 main(int argc, char** argv)
 {
-  auto scope = std::make_shared<bali::scope>();
+  const auto scope = bali::scope::make_top_level();
 
   parse_args(argc, argv);
 

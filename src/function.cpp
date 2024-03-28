@@ -5,14 +5,13 @@
 
 #include <bali/error.hpp>
 #include <bali/eval.hpp>
-#include <bali/function.hpp>
 #include <bali/parser.hpp>
 
 namespace bali
 {
   using builtin_function_map_type = std::unordered_map<
     std::u32string,
-    builtin_function_callback_type
+    value::function::builtin::callback_type
   >;
   using custom_function_map_type = std::unordered_map<
     std::u32string,
@@ -577,25 +576,12 @@ namespace bali
     const std::shared_ptr<class scope>& scope
   )
   {
-    const auto argument = eval(eat("apply", it, end), scope);
+    const auto function = to_function(eat("apply", it, end), scope);
     const auto args = to_list(eat("apply", it, end), scope);
-    auto begin = std::begin(args);
 
     finish("apply", it, end);
-    if (argument && argument->type() == value::type::function)
-    {
-      return std::static_pointer_cast<value::function>(argument)->call(
-        args,
-        scope
-      );
-    }
 
-    return call_function(
-      to_atom(argument, nullptr),
-      begin,
-      std::end(args),
-      scope
-    );
+    return function->call(args, scope);
   }
 
   static value::ptr
@@ -609,6 +595,7 @@ namespace bali
     const auto raw_parameters = to_list(eat("defun", it, end), nullptr);
     std::vector<std::u32string> parameters;
     const auto expression = eat("defun", it, end);
+    std::shared_ptr<value::function> function;
 
     finish("defun", it, end);
     parameters.reserve(raw_parameters.size());
@@ -616,8 +603,10 @@ namespace bali
     {
       parameters.push_back(to_atom(parameter, nullptr));
     }
+    function = value::function::custom::make(parameters, expression, name);
+    scope->set(name, function);
 
-    return define_custom_function(name, parameters, expression);
+    return function;
   }
 
   static value::ptr
@@ -656,7 +645,7 @@ namespace bali
       parameters.push_back(to_atom(parameter, nullptr));
     }
 
-    return value::function::make(parameters, expression);
+    return value::function::custom::make(parameters, expression);
   }
 
   static value::ptr
@@ -754,58 +743,19 @@ namespace bali
     { U"write", function_write },
   };
 
-  static custom_function_map_type custom_function_map;
-
-  std::shared_ptr<value>
-  call_function(
-    const std::u32string& name,
-    value::list::iterator& begin,
-    const value::list::iterator& end,
-    const std::shared_ptr<class scope>& scope,
-    const std::optional<int>& line,
-    const std::optional<int>& column
-  )
+  std::shared_ptr<scope>
+  scope::make_top_level()
   {
+    auto scope = new class scope();
+
+    for (const auto& entry : builtin_function_map)
     {
-      const auto it = custom_function_map.find(name);
-
-      if (it != std::end(custom_function_map))
-      {
-        value::list::container_type arguments;
-
-        arguments.reserve(end - begin);
-        while (begin != end)
-        {
-          arguments.push_back(eval(*begin++, scope));
-        }
-
-        return it->second->call(arguments, scope);
-      }
+      scope->m_variables[entry.first] = value::function::builtin::make(
+        entry.second,
+        entry.first
+      );
     }
 
-    {
-      const auto it = builtin_function_map.find(name);
-
-      if (it != std::end(builtin_function_map))
-      {
-        return (*it->second)(begin, end, scope);
-      }
-    }
-
-    throw error(U"Unrecognized function: `" + name + U"'", line, column);
-  }
-
-  std::shared_ptr<value::function>
-  define_custom_function(
-    const std::u32string& name,
-    const std::vector<std::u32string>& parameters,
-    const value::ptr& expression
-  )
-  {
-    const auto function = value::function::make(parameters, expression, name);
-
-    custom_function_map[name] = function;
-
-    return function;
+    return std::shared_ptr<class scope>(scope);
   }
 }

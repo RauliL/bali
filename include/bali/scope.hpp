@@ -11,6 +11,8 @@ namespace bali
   public:
     using container_type = std::unordered_map<std::u32string, value::ptr>;
 
+    static std::shared_ptr<scope> make_top_level();
+
     explicit scope(const std::shared_ptr<scope>& parent = nullptr);
     scope(const scope&) = default;
     scope(scope&&) = default;
