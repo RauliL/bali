@@ -15,6 +15,7 @@
 #include <bali/parser.hpp>
 
 static std::string programfile;
+static bool use_mexpression = false;
 
 static void
 count_open_parenthesis(const std::string& input, int& count)
@@ -60,7 +61,12 @@ repl(const std::shared_ptr<bali::scope>& scope)
     {
       try
       {
-        for (const auto& value : bali::parse(script, line_counter))
+        for (const auto& value : bali::parse(
+          script,
+          line_counter,
+          1,
+          use_mexpression
+        ))
         {
           std::cout << bali::eval(value, scope) << std::endl;
         }
@@ -91,7 +97,7 @@ run_file(
 
   try
   {
-    for (const auto& value : bali::parse(source, 1))
+    for (const auto& value : bali::parse(source, 1, 1, use_mexpression))
     {
       bali::eval(value, scope);
     }
@@ -169,6 +175,10 @@ parse_args(int argc, char** argv)
     {
       switch (arg[i])
       {
+        case 'm':
+          use_mexpression = true;
+          break;
+
         case 'h':
           print_usage(std::cout, argv[0]);
           std::exit(EXIT_SUCCESS);
